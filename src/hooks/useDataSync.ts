@@ -202,37 +202,32 @@ export function useDataSync() {
     }, 5000); // Debounce saves by 5 seconds
   }, [user, saveToCloud]);
 
-  // Initial sync when user logs in
-  useEffect(() => {
-    if (!user || loading || hasInitialized.current) return;
+  // Initial sync when user logs in - DISABLED to prevent loops
+  // useEffect(() => {
+  //   if (!user || loading || hasInitialized.current) return;
+  //   hasInitialized.current = true;
+  //   migrateToCloud();
+  // }, [user, loading, migrateToCloud]);
 
-    hasInitialized.current = true;
-    migrateToCloud();
-  }, [user, loading, migrateToCloud]);
-
-  // Listen for localStorage changes (from context updates)
-  useEffect(() => {
-    if (!user) return;
-
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key && Object.values(STORAGE_KEYS).includes(e.key)) {
-        scheduleSync();
-      }
-    };
-
-    // Also listen for custom event when contexts save
-    const handleLocalSave = () => {
-      scheduleSync();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('localDataSaved', handleLocalSave);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('localDataSaved', handleLocalSave);
-    };
-  }, [user, scheduleSync]);
+  // Listen for localStorage changes - DISABLED to prevent loops
+  // Auto-sync disabled - use manual Upload/Download buttons in Settings
+  // useEffect(() => {
+  //   if (!user) return;
+  //   const handleStorageChange = (e: StorageEvent) => {
+  //     if (e.key && Object.values(STORAGE_KEYS).includes(e.key)) {
+  //       scheduleSync();
+  //     }
+  //   };
+  //   const handleLocalSave = () => {
+  //     scheduleSync();
+  //   };
+  //   window.addEventListener('storage', handleStorageChange);
+  //   window.addEventListener('localDataSaved', handleLocalSave);
+  //   return () => {
+  //     window.removeEventListener('storage', handleStorageChange);
+  //     window.removeEventListener('localDataSaved', handleLocalSave);
+  //   };
+  // }, [user, scheduleSync]);
 
   // Manual sync trigger - upload local data to cloud
   const forceSync = useCallback(async () => {
