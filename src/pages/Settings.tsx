@@ -41,7 +41,7 @@ import { toast } from 'sonner';
 
 const Settings = () => {
   const { user, loading: authLoading, signInWithGoogle, signOut } = useFirebaseAuth();
-  const { forceSync, isLoading: syncLoading } = useDataSync();
+  const { forceSync, forceDownload, isLoading: syncLoading } = useDataSync();
   
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -204,15 +204,24 @@ const Settings = () => {
                       </Badge>
                     </div>
                     
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <Button 
                         onClick={forceSync} 
                         variant="outline" 
                         className="border-coquette-brown-200"
                         disabled={syncLoading}
                       >
-                        <RefreshCw className={`h-4 w-4 mr-2 ${syncLoading ? 'animate-spin' : ''}`} />
-                        Sync Now
+                        <Upload className={`h-4 w-4 mr-2`} />
+                        Upload to Cloud
+                      </Button>
+                      <Button 
+                        onClick={forceDownload} 
+                        variant="outline" 
+                        className="border-coquette-brown-200"
+                        disabled={syncLoading}
+                      >
+                        <Download className={`h-4 w-4 mr-2`} />
+                        Download from Cloud
                       </Button>
                       <Button 
                         onClick={handleSignOut} 
@@ -225,8 +234,8 @@ const Settings = () => {
                     </div>
                     
                     <p className="text-sm text-coquette-brown-500">
-                      ✨ Your data automatically syncs whenever you make changes. 
-                      Open the app on any device with the same account to see your data.
+                      📤 <strong>Upload to Cloud</strong> - Push this device's data to the cloud<br/>
+                      📥 <strong>Download from Cloud</strong> - Pull data from cloud to this device
                     </p>
                   </div>
                 ) : (

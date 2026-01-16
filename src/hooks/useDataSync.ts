@@ -208,7 +208,7 @@ export function useDataSync() {
     };
   }, [user, scheduleSync]);
 
-  // Manual sync trigger
+  // Manual sync trigger - upload local data to cloud
   const forceSync = useCallback(async () => {
     if (!user) {
       toast.error('Please sign in to sync');
@@ -217,16 +217,41 @@ export function useDataSync() {
 
     try {
       await saveToCloud();
-      toast.success('Data synced! ☁️');
+      toast.success('Data uploaded to cloud! ☁️');
     } catch (error) {
+      console.error('Sync error:', error);
       toast.error('Sync failed');
     }
   }, [user, saveToCloud]);
+
+  // Force download from cloud
+  const forceDownload = useCallback(async () => {
+    if (!user) {
+      toast.error('Please sign in to sync');
+      return;
+    }
+
+    try {
+      const loaded = await loadFromCloud();
+      if (loaded) {
+        toast.success('Data downloaded from cloud! ☁️', {
+          description: 'Refreshing page to load data...',
+        });
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        toast.info('No cloud data found');
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Download failed');
+    }
+  }, [user, loadFromCloud]);
 
   return {
     isAuthenticated: !!user,
     isLoading: loading,
     forceSync,
+    forceDownload,
     loadFromCloud,
   };
 }
