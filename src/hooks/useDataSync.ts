@@ -34,7 +34,10 @@ export function useDataSync() {
   // Save all localStorage data to Firestore
   const saveToCloud = useCallback(async () => {
     const docRef = getDocRef();
-    if (!docRef) return;
+    if (!docRef) {
+      console.error('No document reference - user not logged in?');
+      throw new Error('Not logged in');
+    }
 
     const allData: Record<string, any> = {};
     
@@ -49,9 +52,7 @@ export function useDataSync() {
       }
     });
 
-    // Create a hash of the data to avoid unnecessary saves
-    const dataHash = JSON.stringify(allData);
-    if (dataHash === lastSyncRef.current) return;
+    console.log('Attempting to save data:', Object.keys(allData));
 
     try {
       await setDoc(docRef, {
@@ -59,10 +60,11 @@ export function useDataSync() {
         updatedAt: new Date().toISOString(),
         deviceInfo: navigator.userAgent,
       });
-      lastSyncRef.current = dataHash;
-      console.log('Data synced to cloud');
+      lastSyncRef.current = JSON.stringify(allData);
+      console.log('Data synced to cloud successfully!');
     } catch (error) {
       console.error('Error saving to cloud:', error);
+      throw error;
     }
   }, [getDocRef]);
 
