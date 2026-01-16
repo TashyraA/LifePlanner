@@ -30,6 +30,37 @@ export function useDataSync() {
     return doc(db, 'users', user.uid, 'appData', dataType);
   }, [user]);
 
+  // Helper to strip base64 images from data to reduce size
+  const stripImages = (data: any): any => {
+    if (!data) return data;
+    if (typeof data === 'string') {
+      // If it's a base64 image string, replace with placeholder
+      if (data.startsWith('data:image')) {
+        return '[IMAGE_NOT_SYNCED]';
+      }
+      return data;
+    }
+    if (Array.isArray(data)) {
+      return data.map(item => stripImages(item));
+    }
+    if (typeof data === 'object') {
+      const cleaned: any = {};
+      for (const [key, value] of Object.entries(data)) {
+        // Skip keys that are likely images
+        if (key.toLowerCase().includes('image') && typeof value === 'string' && value.startsWith('data:')) {
+          cleaned[key] = '[IMAGE_NOT_SYNCED]';
+        } else if (key === 'headerImageKeys' || key === 'coverImageKey') {
+          // Skip image keys entirely - these are IndexedDB references
+          cleaned[key] = value;
+        } else {
+          cleaned[key] = stripImages(value);
+        }
+      }
+      return cleaned;
+    }
+    return data;
+  };
+
   // Save all localStorage data to Firestore (split across documents)
   const saveToCloud = useCallback(async () => {
     if (!user) {
@@ -43,19 +74,26 @@ export function useDataSync() {
     for (const [key, storageKey] of Object.entries(STORAGE_KEYS)) {
       const stored = localStorage.getItem(storageKey);
       if (stored) {
-        // Skip if data hasn't changed
-        if (lastSyncRef.current[key] === stored) continue;
-        
         try {
-          const data = JSON.parse(stored);
+          let data = JSON.parse(stored);
+          
+          // Strip base64 images to reduce size
+          data = stripImages(data);
+          
+          // Check size before uploading (rough estimate)
+          const dataSize = JSON.stringify(data).length;
+          if (dataSize > 900000) { // Leave some margin under 1MB
+            console.warn(`${key} data is still too large (${(dataSize/1024/1024).toFixed(2)}MB), skipping`);
+            continue;
+          }
+          
           const docRef = doc(db, 'users', user.uid, 'appData', key);
           batch.set(docRef, {
             data,
             updatedAt: new Date().toISOString(),
           });
-          lastSyncRef.current[key] = stored;
           hasChanges = true;
-          console.log(`Queued ${key} for upload`);
+          console.log(`Queued ${key} for upload (${(dataSize/1024).toFixed(1)}KB)`);
         } catch (e) {
           console.error(`Failed to parse ${key}:`, e);
         }
