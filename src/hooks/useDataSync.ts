@@ -113,10 +113,14 @@ export function useDataSync() {
     }
   }, [user]);
 
+  // Flag to prevent sync loops when loading from cloud
+  const isLoadingFromCloud = useRef(false);
+
   // Load data from Firestore into localStorage
   const loadFromCloud = useCallback(async (): Promise<boolean> => {
     if (!user) return false;
 
+    isLoadingFromCloud.current = true;
     let loadedAny = false;
 
     for (const [key, storageKey] of Object.entries(STORAGE_KEYS)) {
@@ -137,6 +141,11 @@ export function useDataSync() {
         console.error(`Error loading ${key} from cloud:`, error);
       }
     }
+
+    // Keep flag on for a bit to prevent immediate re-sync
+    setTimeout(() => {
+      isLoadingFromCloud.current = false;
+    }, 3000);
 
     return loadedAny;
   }, [user]);
@@ -179,15 +188,18 @@ export function useDataSync() {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const scheduleSync = useCallback(() => {
-    if (!user) return;
+    // Don't sync if we just loaded from cloud (prevents loop)
+    if (!user || isLoadingFromCloud.current) return;
 
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
 
     saveTimeoutRef.current = setTimeout(() => {
-      saveToCloud().catch(console.error);
-    }, 2000); // Debounce saves by 2 seconds
+      if (!isLoadingFromCloud.current) {
+        saveToCloud().catch(console.error);
+      }
+    }, 5000); // Debounce saves by 5 seconds
   }, [user, saveToCloud]);
 
   // Initial sync when user logs in
