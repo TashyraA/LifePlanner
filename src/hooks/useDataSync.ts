@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { doc, setDoc, getDoc, onSnapshot, collection, writeBatch } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot, writeBatch } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useFirebaseAuth } from '../contexts/FirebaseAuthContext';
 import { toast } from 'sonner';
@@ -17,90 +17,100 @@ const STORAGE_KEYS = {
 
 /**
  * Hook to handle syncing ALL app data with Firebase
- * This provides a simpler approach - sync everything at once rather than per-context
+ * Data is split across multiple documents to avoid 1MB limit
  */
 export function useDataSync() {
   const { user, loading } = useFirebaseAuth();
   const hasInitialized = useRef(false);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastSyncRef = useRef<string | null>(null);
+  const lastSyncRef = useRef<Record<string, string>>({});
 
-  // Get the user's data document reference
-  const getDocRef = useCallback(() => {
+  // Get document reference for a specific data type
+  const getDocRef = useCallback((dataType: string) => {
     if (!user) return null;
-    return doc(db, 'users', user.uid, 'appData', 'sync');
+    return doc(db, 'users', user.uid, 'appData', dataType);
   }, [user]);
 
-  // Save all localStorage data to Firestore
+  // Save all localStorage data to Firestore (split across documents)
   const saveToCloud = useCallback(async () => {
-    const docRef = getDocRef();
-    if (!docRef) {
-      console.error('No document reference - user not logged in?');
+    if (!user) {
+      console.error('No user - not logged in');
       throw new Error('Not logged in');
     }
 
-    const allData: Record<string, any> = {};
-    
-    Object.entries(STORAGE_KEYS).forEach(([key, storageKey]) => {
+    const batch = writeBatch(db);
+    let hasChanges = false;
+
+    for (const [key, storageKey] of Object.entries(STORAGE_KEYS)) {
       const stored = localStorage.getItem(storageKey);
       if (stored) {
+        // Skip if data hasn't changed
+        if (lastSyncRef.current[key] === stored) continue;
+        
         try {
-          allData[key] = JSON.parse(stored);
-        } catch {
-          allData[key] = stored;
+          const data = JSON.parse(stored);
+          const docRef = doc(db, 'users', user.uid, 'appData', key);
+          batch.set(docRef, {
+            data,
+            updatedAt: new Date().toISOString(),
+          });
+          lastSyncRef.current[key] = stored;
+          hasChanges = true;
+          console.log(`Queued ${key} for upload`);
+        } catch (e) {
+          console.error(`Failed to parse ${key}:`, e);
         }
       }
-    });
-
-    console.log('Attempting to save data:', Object.keys(allData));
-
-    try {
-      await setDoc(docRef, {
-        ...allData,
-        updatedAt: new Date().toISOString(),
-        deviceInfo: navigator.userAgent,
-      });
-      lastSyncRef.current = JSON.stringify(allData);
-      console.log('Data synced to cloud successfully!');
-    } catch (error) {
-      console.error('Error saving to cloud:', error);
-      throw error;
     }
-  }, [getDocRef]);
+
+    if (hasChanges) {
+      try {
+        await batch.commit();
+        console.log('All data synced to cloud successfully!');
+      } catch (error) {
+        console.error('Error saving to cloud:', error);
+        throw error;
+      }
+    } else {
+      console.log('No changes to sync');
+    }
+  }, [user]);
 
   // Load data from Firestore into localStorage
   const loadFromCloud = useCallback(async (): Promise<boolean> => {
-    const docRef = getDocRef();
-    if (!docRef) return false;
+    if (!user) return false;
 
-    try {
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const cloudData = docSnap.data();
+    let loadedAny = false;
+
+    for (const [key, storageKey] of Object.entries(STORAGE_KEYS)) {
+      try {
+        const docRef = doc(db, 'users', user.uid, 'appData', key);
+        const docSnap = await getDoc(docRef);
         
-        Object.entries(STORAGE_KEYS).forEach(([key, storageKey]) => {
-          if (cloudData[key]) {
-            localStorage.setItem(storageKey, JSON.stringify(cloudData[key]));
+        if (docSnap.exists()) {
+          const cloudData = docSnap.data().data;
+          if (cloudData) {
+            localStorage.setItem(storageKey, JSON.stringify(cloudData));
+            lastSyncRef.current[key] = JSON.stringify(cloudData);
+            loadedAny = true;
+            console.log(`Loaded ${key} from cloud`);
           }
-        });
-
-        lastSyncRef.current = JSON.stringify(cloudData);
-        return true;
+        }
+      } catch (error) {
+        console.error(`Error loading ${key} from cloud:`, error);
       }
-    } catch (error) {
-      console.error('Error loading from cloud:', error);
     }
-    return false;
-  }, [getDocRef]);
+
+    return loadedAny;
+  }, [user]);
 
   // Migrate existing localStorage data to Firestore (first-time sync)
   const migrateToCloud = useCallback(async () => {
-    const docRef = getDocRef();
-    if (!docRef) return;
+    if (!user) return;
 
     try {
-      // Check if cloud already has data
-      const docSnap = await getDoc(docRef);
+      // Check if cloud already has any data (check planner as indicator)
+      const plannerRef = doc(db, 'users', user.uid, 'appData', 'planner');
+      const docSnap = await getDoc(plannerRef);
       
       if (docSnap.exists()) {
         // Cloud has data - load it (this overwrites local)
@@ -122,12 +132,14 @@ export function useDataSync() {
     } catch (error) {
       console.error('Migration error:', error);
       toast.error('Sync failed', {
-        description: 'Could not sync your data. Please try again.',
+        description: error instanceof Error ? error.message : 'Could not sync your data.',
       });
     }
-  }, [getDocRef, loadFromCloud, saveToCloud]);
+  }, [user, loadFromCloud, saveToCloud]);
 
   // Listen for changes in localStorage and sync to cloud (debounced)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   const scheduleSync = useCallback(() => {
     if (!user) return;
 
@@ -136,47 +148,9 @@ export function useDataSync() {
     }
 
     saveTimeoutRef.current = setTimeout(() => {
-      saveToCloud();
+      saveToCloud().catch(console.error);
     }, 2000); // Debounce saves by 2 seconds
   }, [user, saveToCloud]);
-
-  // Listen for real-time updates from Firestore (other devices)
-  useEffect(() => {
-    if (!user || loading) return;
-
-    const docRef = getDocRef();
-    if (!docRef) return;
-
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists() && hasInitialized.current) {
-        const cloudData = docSnap.data();
-        const cloudHash = JSON.stringify(cloudData);
-        
-        // Only update if data is different (from another device)
-        if (cloudHash !== lastSyncRef.current) {
-          Object.entries(STORAGE_KEYS).forEach(([key, storageKey]) => {
-            if (cloudData[key]) {
-              localStorage.setItem(storageKey, JSON.stringify(cloudData[key]));
-            }
-          });
-          lastSyncRef.current = cloudHash;
-          
-          // Notify user and optionally reload
-          toast.info('Data updated from another device', {
-            description: 'Refresh to see the latest changes.',
-            action: {
-              label: 'Refresh',
-              onClick: () => window.location.reload(),
-            },
-          });
-        }
-      }
-    }, (error) => {
-      console.error('Firestore listener error:', error);
-    });
-
-    return () => unsubscribe();
-  }, [user, loading, getDocRef]);
 
   // Initial sync when user logs in
   useEffect(() => {
