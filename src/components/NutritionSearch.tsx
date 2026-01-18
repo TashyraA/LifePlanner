@@ -101,15 +101,22 @@ export const NutritionSearch: React.FC<NutritionSearchProps> = ({
     setSelectedFood(null);
 
     try {
+      // Try branded foods first for brand name searches
       const response = await fetch(
-        `${USDA_BASE_URL}/foods/search?api_key=${USDA_API_KEY}&query=${encodeURIComponent(searchQuery)}&pageSize=25&dataType=Branded,Survey%20(FNDDS),Foundation,SR%20Legacy`,
+        `${USDA_BASE_URL}/foods/search?api_key=${USDA_API_KEY}&query=${encodeURIComponent(searchQuery)}&pageSize=30`,
         {
           method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
         }
       );
 
-      if (!response.ok) throw new Error('Failed to fetch food data');
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error('Rate limited. Please wait a moment and try again.');
+        } else if (response.status === 403) {
+          throw new Error('API access issue. Try again in a few seconds.');
+        }
+        throw new Error(`API error: ${response.status}`);
+      }
 
       const data = await response.json();
       
@@ -126,9 +133,9 @@ export const NutritionSearch: React.FC<NutritionSearchProps> = ({
       } else {
         setError('No foods found. Try a different search term.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error searching food:', err);
-      setError('Failed to search. Please try again.');
+      setError(err.message || 'Failed to search. Please try again.');
     } finally {
       setIsLoading(false);
     }
