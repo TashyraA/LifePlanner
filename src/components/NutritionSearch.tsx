@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,10 @@ interface NutritionSearchProps {
 const USDA_API_KEY = 'DEMO_KEY';
 const USDA_BASE_URL = 'https://api.nal.usda.gov/fdc/v1';
 
+// Simple in-memory cache to reduce API calls
+const searchCache = new Map<string, { foods: FoodItem[], timestamp: number }>();
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+
 export const NutritionSearch: React.FC<NutritionSearchProps> = ({
   isOpen,
   onClose,
@@ -51,6 +55,7 @@ export const NutritionSearch: React.FC<NutritionSearchProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [servings, setServings] = useState('1');
+  const lastSearchTime = useRef<number>(0);
 
   const extractNutrients = (foodNutrients: any[]): NutritionData => {
     const nutrients: NutritionData = {
@@ -93,7 +98,24 @@ export const NutritionSearch: React.FC<NutritionSearchProps> = ({
   };
 
   const searchFood = async () => {
-    if (!searchQuery.trim()) return;
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return;
+    
+    // Rate limiting: minimum 2 seconds between searches
+    const now = Date.now();
+    if (now - lastSearchTime.current < 2000) {
+      setError('Please wait a moment between searches.');
+      return;
+    }
+    lastSearchTime.current = now;
+
+    // Check cache first
+    const cached = searchCache.get(query);
+    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+      setSearchResults(cached.foods);
+      setSelectedFood(null);
+      return;
+    }
     
     setIsLoading(true);
     setError(null);
@@ -101,9 +123,8 @@ export const NutritionSearch: React.FC<NutritionSearchProps> = ({
     setSelectedFood(null);
 
     try {
-      // Try branded foods first for brand name searches
       const response = await fetch(
-        `${USDA_BASE_URL}/foods/search?api_key=${USDA_API_KEY}&query=${encodeURIComponent(searchQuery)}&pageSize=30`,
+        `${USDA_BASE_URL}/foods/search?api_key=${USDA_API_KEY}&query=${encodeURIComponent(query)}&pageSize=30`,
         {
           method: 'GET',
         }
@@ -111,9 +132,9 @@ export const NutritionSearch: React.FC<NutritionSearchProps> = ({
 
       if (!response.ok) {
         if (response.status === 429) {
-          throw new Error('Rate limited. Please wait a moment and try again.');
+          throw new Error('Rate limited. Wait 30 seconds and try again.');
         } else if (response.status === 403) {
-          throw new Error('API access issue. Try again in a few seconds.');
+          throw new Error('API limit reached. Try again in a few minutes.');
         }
         throw new Error(`API error: ${response.status}`);
       }
@@ -129,6 +150,8 @@ export const NutritionSearch: React.FC<NutritionSearchProps> = ({
           servingSizeUnit: food.servingSizeUnit,
           nutrients: extractNutrients(food.foodNutrients),
         }));
+        // Cache the results
+        searchCache.set(query, { foods, timestamp: now });
         setSearchResults(foods);
       } else {
         setError('No foods found. Try a different search term.');
