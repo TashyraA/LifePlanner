@@ -146,7 +146,7 @@ export const RecipeBrowserDialog: React.FC<RecipeBrowserDialogProps> = ({ open, 
                   <img
                     src={selectedRecipeData.image}
                     alt={selectedRecipeData.name}
-                    className="w-full h-64 object-cover rounded-lg"
+                    className="w-full h-64 object-contain rounded-lg bg-coquette-brown-50"
                   />
                   {selectedRecipeData.videoUrl && (
                     <Button

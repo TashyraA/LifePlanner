@@ -80,7 +80,7 @@ export const MealPhotoUpload: React.FC<MealPhotoUploadProps> = ({
           <img
             src={image}
             alt="Meal preview"
-            className="w-full h-32 object-cover rounded-lg border border-coquette-brown-200"
+            className="w-full h-32 object-contain rounded-lg border border-coquette-brown-200 bg-coquette-brown-50"
           />
         </div>
       )}

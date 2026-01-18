@@ -390,7 +390,7 @@ const RecipeBank = () => {
                       <img
                         src={newRecipe.image}
                         alt="Recipe preview"
-                        className="w-full h-48 object-cover rounded-lg"
+                        className="w-full h-48 object-contain rounded-lg bg-coquette-brown-50"
                       />
                       {newRecipe.videoUrl && (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
@@ -619,7 +619,7 @@ const RecipeBank = () => {
                   <img
                     src={selectedRecipeData.image}
                     alt={selectedRecipeData.name}
-                    className="w-full h-64 object-cover rounded-lg"
+                    className="w-full h-64 object-contain rounded-lg bg-coquette-brown-50"
                   />
                   {selectedRecipeData.videoUrl && (
                     <Button
@@ -843,7 +843,7 @@ const RecipeBank = () => {
                 <img
                   src={editRecipeData.image}
                   alt="Recipe preview"
-                  className="w-full h-48 object-cover rounded-lg"
+                  className="w-full h-48 object-contain rounded-lg bg-coquette-brown-50"
                 />
                 {editRecipeData.videoUrl && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">

@@ -1139,7 +1139,7 @@ const MealTracker = () => {
                           {newMeal.image && (
                             <div>
                               <Label>Preview</Label>
-                              <img src={newMeal.image} alt="Preview" className="w-full h-32 object-cover rounded-lg border border-coquette-brown-200" />
+                              <img src={newMeal.image} alt="Preview" className="w-full h-32 object-contain rounded-lg border border-coquette-brown-200 bg-coquette-brown-50" />
                             </div>
                           )}
 
@@ -1502,7 +1502,7 @@ const MealTracker = () => {
               {/* Meal Details Dialog */}
               {selectedMealData && (
                 <Dialog open={!!selectedMeal} onOpenChange={() => setSelectedMeal(null)}>
-                  <DialogContent className="max-w-2xl">
+                  <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle className="text-coquette-brown-600">{selectedMealData.name}</DialogTitle>
                     </DialogHeader>
@@ -1510,7 +1510,7 @@ const MealTracker = () => {
                       <img
                         src={selectedMealData.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'}
                         alt={selectedMealData.name}
-                        className="w-full h-48 object-cover rounded-lg"
+                        className="w-full h-48 object-contain rounded-lg bg-coquette-brown-50"
                         onError={(e) => {
                           e.currentTarget.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400';
                         }}
@@ -1627,7 +1627,7 @@ const MealTracker = () => {
                                 {editMealData.image && (
                                   <div>
                                     <Label>Current Photo</Label>
-                                    <img src={editMealData.image} alt="Preview" className="w-full h-32 object-cover rounded-lg border border-coquette-brown-200" />
+                                    <img src={editMealData.image} alt="Preview" className="w-full h-32 object-contain rounded-lg border border-coquette-brown-200 bg-coquette-brown-50" />
                                   </div>
                                 )}
 
