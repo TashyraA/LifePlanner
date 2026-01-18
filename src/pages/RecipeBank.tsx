@@ -11,11 +11,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BookOpen, Plus, Trash2, Edit, Link as LinkIcon, Play, Calendar, ShoppingCart, ArrowLeft, Crop } from 'lucide-react';
+import { BookOpen, Plus, Trash2, Edit, Link as LinkIcon, Play, Calendar, ShoppingCart, ArrowLeft, Crop, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { validateAndCompressImage } from '../lib/imageCompression';
 import { Link } from 'react-router-dom';
 import { ImageCropper } from '../components/ImageCropper';
+import { NutritionSearch } from '../components/NutritionSearch';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -35,6 +36,10 @@ const RecipeBank = () => {
   // Image cropper state
   const [cropperImage, setCropperImage] = useState<string | null>(null);
   const [cropperTarget, setCropperTarget] = useState<'newRecipe' | 'editRecipe' | null>(null);
+
+  // Nutrition search state
+  const [nutritionSearchOpen, setNutritionSearchOpen] = useState(false);
+  const [nutritionSearchTarget, setNutritionSearchTarget] = useState<'newRecipe' | 'editRecipe'>('newRecipe');
 
   const [newRecipe, setNewRecipe] = useState({
     name: '',
@@ -175,6 +180,36 @@ const RecipeBank = () => {
     }
     setCropperImage(null);
     setCropperTarget(null);
+  };
+
+  const handleNutritionSelect = (nutrition: { calories: number; protein: number; carbs: number; fats: number; fiber: number }, foodName: string) => {
+    if (nutritionSearchTarget === 'newRecipe') {
+      setNewRecipe({
+        ...newRecipe,
+        calories: nutrition.calories.toString(),
+        protein: nutrition.protein.toString(),
+        carbs: nutrition.carbs.toString(),
+        fats: nutrition.fats.toString(),
+        fiber: nutrition.fiber.toString(),
+      });
+      toast({
+        title: 'Nutrition Added!',
+        description: `Added nutrition info from "${foodName}"`,
+      });
+    } else {
+      setEditRecipeData({
+        ...editRecipeData,
+        calories: nutrition.calories.toString(),
+        protein: nutrition.protein.toString(),
+        carbs: nutrition.carbs.toString(),
+        fats: nutrition.fats.toString(),
+        fiber: nutrition.fiber.toString(),
+      });
+      toast({
+        title: 'Nutrition Updated!',
+        description: `Updated nutrition info from "${foodName}"`,
+      });
+    }
   };
 
   const handleAddRecipe = () => {
@@ -483,7 +518,22 @@ const RecipeBank = () => {
 
                   {/* Nutrition Info */}
                   <div className="space-y-3">
-                    <Label className="text-coquette-brown-600 font-medium">Nutrition Information (per serving)</Label>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-coquette-brown-600 font-medium">Nutrition Information (per serving)</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setNutritionSearchTarget('newRecipe');
+                          setNutritionSearchOpen(true);
+                        }}
+                        className="border-coquette-pink-300 text-coquette-pink-500 hover:bg-coquette-pink-50"
+                      >
+                        <Search className="h-4 w-4 mr-1" />
+                        Search Food
+                      </Button>
+                    </div>
                     <div className="grid grid-cols-5 gap-3">
                       <div>
                         <Label className="text-xs text-coquette-brown-500">Calories</Label>
@@ -951,7 +1001,22 @@ const RecipeBank = () => {
 
             {/* Nutrition Info */}
             <div className="space-y-3">
-              <Label className="text-coquette-brown-600 font-medium">Nutrition Information (per serving)</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-coquette-brown-600 font-medium">Nutrition Information (per serving)</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setNutritionSearchTarget('editRecipe');
+                    setNutritionSearchOpen(true);
+                  }}
+                  className="border-coquette-pink-300 text-coquette-pink-500 hover:bg-coquette-pink-50"
+                >
+                  <Search className="h-4 w-4 mr-1" />
+                  Search Food
+                </Button>
+              </div>
               <div className="grid grid-cols-5 gap-3">
                 <div>
                   <Label className="text-xs text-coquette-brown-500">Calories</Label>
@@ -1044,6 +1109,13 @@ const RecipeBank = () => {
           }}
         />
       )}
+
+      {/* Nutrition Search */}
+      <NutritionSearch
+        isOpen={nutritionSearchOpen}
+        onClose={() => setNutritionSearchOpen(false)}
+        onSelect={handleNutritionSelect}
+      />
     </SidebarProvider>
   );
 };

@@ -60,6 +60,7 @@ const Budget = () => {
     incomes: financeIncomes, 
     expenses: financeExpenses, 
     totalIncome: financeTotalIncome,
+    totalSavings: financeTotalSavings,
     currentMonthExpenses: financeCurrentMonthExpenses 
   } = useFinance();
 
@@ -177,16 +178,32 @@ const Budget = () => {
         source: 'finance',
       }));
 
+    // Also sync savings from Finance incomes
+    const hasSavingsTransaction = getCurrentMonthTransactions()
+      .some(t => t.source === 'finance' && t.category === 'savings');
+    
+    if (financeTotalSavings > 0 && !hasSavingsTransaction) {
+      newTransactions.push({
+        description: 'Savings (from Finance)',
+        amount: financeTotalSavings,
+        date: new Date(),
+        category: 'savings' as TransactionCategory,
+        isExpense: false,
+        source: 'finance',
+      });
+    }
+
     if (newTransactions.length > 0) {
       importTransactions(newTransactions);
+      const savingsMsg = financeTotalSavings > 0 && !hasSavingsTransaction ? ' + savings' : '';
       toast({
-        title: `Synced ${newTransactions.length} expenses! 🔗`,
-        description: "Categorize them as Needs or Wants below.",
+        title: `Synced ${newTransactions.length} items${savingsMsg}! 🔗`,
+        description: "Categorize expenses as Needs or Wants below.",
       });
     } else {
       toast({
         title: "Already in sync!",
-        description: "All Finance expenses are already in your budget.",
+        description: "All Finance data is already in your budget.",
       });
     }
     setIsSyncDialogOpen(false);
