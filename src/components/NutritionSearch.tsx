@@ -4,8 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Search, Loader2, Plus, X } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Search, Loader2, Plus, X, ChevronDown } from 'lucide-react';
 
 export interface NutritionData {
   calories: number;
@@ -38,7 +37,6 @@ interface NutritionSearchProps {
   onAddIngredient: (ingredient: FoodIngredient) => void;
 }
 
-// USDA FoodData Central API
 const USDA_API_KEY = 'DEMO_KEY';
 const USDA_BASE_URL = 'https://api.nal.usda.gov/fdc/v1';
 
@@ -100,10 +98,11 @@ export const NutritionSearch: React.FC<NutritionSearchProps> = ({
     setIsLoading(true);
     setError(null);
     setSearchResults([]);
+    setSelectedFood(null);
 
     try {
       const response = await fetch(
-        `${USDA_BASE_URL}/foods/search?api_key=${USDA_API_KEY}&query=${encodeURIComponent(searchQuery)}&pageSize=20&dataType=Branded,Survey%20(FNDDS),Foundation,SR%20Legacy`,
+        `${USDA_BASE_URL}/foods/search?api_key=${USDA_API_KEY}&query=${encodeURIComponent(searchQuery)}&pageSize=25&dataType=Branded,Survey%20(FNDDS),Foundation,SR%20Legacy`,
         {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
@@ -175,7 +174,6 @@ export const NutritionSearch: React.FC<NutritionSearchProps> = ({
     if (e.key === 'Enter') searchFood();
   };
 
-  // Calculate nutrition based on servings
   const getAdjustedNutrition = () => {
     if (!selectedFood) return null;
     const servingCount = parseFloat(servings) || 1;
@@ -192,27 +190,28 @@ export const NutritionSearch: React.FC<NutritionSearchProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="text-coquette-brown-600 flex items-center gap-2">
-            <Search className="h-5 w-5" />
-            Search & Add Ingredient
+      <DialogContent className="w-[95vw] max-w-lg mx-auto p-4 sm:p-6 max-h-[90vh] flex flex-col">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-coquette-brown-600 flex items-center gap-2 text-base sm:text-lg">
+            <Search className="h-4 w-4 sm:h-5 sm:w-5" />
+            Search & Add Food
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex gap-2">
+        {/* Search Input - Sticky */}
+        <div className="flex gap-2 pb-2">
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Search food (e.g., Perdue chicken breast, banana)"
-            className="border-coquette-brown-200"
-            autoFocus
+            placeholder="Search (e.g., chicken breast)"
+            className="border-coquette-brown-200 text-base"
+            style={{ fontSize: '16px' }} // Prevents iOS zoom
           />
           <Button
             onClick={searchFood}
             disabled={isLoading || !searchQuery.trim()}
-            className="bg-coquette-pink-300 hover:bg-coquette-pink-400 text-coquette-brown-600"
+            className="bg-coquette-pink-300 hover:bg-coquette-pink-400 text-coquette-brown-600 px-3"
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
           </Button>
@@ -222,89 +221,116 @@ export const NutritionSearch: React.FC<NutritionSearchProps> = ({
           <div className="text-red-500 text-sm text-center py-2">{error}</div>
         )}
 
-        <ScrollArea className="flex-1 max-h-[40vh]">
-          <div className="space-y-2 pr-4">
-            {searchResults.map((food) => (
-              <Card
-                key={food.fdcId}
-                className={`p-3 cursor-pointer transition-all ${
-                  selectedFood?.fdcId === food.fdcId
-                    ? 'border-2 border-coquette-pink-400 bg-coquette-pink-50'
-                    : 'border-coquette-brown-200 hover:border-coquette-pink-300 hover:bg-coquette-pink-50/50'
-                }`}
-                onClick={() => {
-                  setSelectedFood(food);
-                  setServings('1');
-                }}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-coquette-brown-600 text-sm capitalize">
-                      {food.description.toLowerCase()}
-                    </h4>
-                    {food.brandName && (
-                      <p className="text-xs text-coquette-pink-500 font-medium">{food.brandName}</p>
-                    )}
-                    <p className="text-xs text-coquette-brown-400">
-                      Per {food.servingSize ? `${food.servingSize} ${food.servingSizeUnit || 'g'}` : '100g'}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
-                  <span className="bg-coquette-brown-100 px-2 py-0.5 rounded">{food.nutrients.calories} cal</span>
-                  <span className="bg-blue-100 px-2 py-0.5 rounded">P: {food.nutrients.protein}g</span>
-                  <span className="bg-yellow-100 px-2 py-0.5 rounded">C: {food.nutrients.carbs}g</span>
-                  <span className="bg-orange-100 px-2 py-0.5 rounded">F: {food.nutrients.fats}g</span>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </ScrollArea>
+        {/* Scrollable Results Area */}
+        <div className="flex-1 overflow-y-auto min-h-0" style={{ maxHeight: selectedFood ? '30vh' : '50vh' }}>
+          {searchResults.length > 0 && (
+            <>
+              <div className="text-xs text-coquette-brown-400 mb-2 flex items-center justify-between">
+                <span>{searchResults.length} results found</span>
+                <span className="flex items-center gap-1">
+                  <ChevronDown className="h-3 w-3" />
+                  Scroll for more
+                </span>
+              </div>
+              <div className="space-y-2 pb-2">
+                {searchResults.map((food) => (
+                  <Card
+                    key={food.fdcId}
+                    className={`p-3 cursor-pointer transition-all active:scale-[0.98] ${
+                      selectedFood?.fdcId === food.fdcId
+                        ? 'border-2 border-coquette-pink-400 bg-coquette-pink-50'
+                        : 'border-coquette-brown-200 hover:border-coquette-pink-300'
+                    }`}
+                    onClick={() => {
+                      setSelectedFood(food);
+                      setServings('1');
+                    }}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1 pr-2">
+                        <h4 className="font-medium text-coquette-brown-600 text-sm leading-tight capitalize">
+                          {food.description.toLowerCase().slice(0, 60)}{food.description.length > 60 ? '...' : ''}
+                        </h4>
+                        {food.brandName && (
+                          <p className="text-xs text-coquette-pink-500 font-medium truncate">{food.brandName}</p>
+                        )}
+                        <p className="text-xs text-coquette-brown-400">
+                          Per {food.servingSize ? `${food.servingSize}${food.servingSizeUnit || 'g'}` : '100g'}
+                        </p>
+                      </div>
+                      {selectedFood?.fdcId === food.fdcId && (
+                        <div className="bg-coquette-pink-400 text-white text-xs px-2 py-0.5 rounded">
+                          Selected
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1 text-xs">
+                      <span className="bg-coquette-brown-100 px-1.5 py-0.5 rounded">{food.nutrients.calories}cal</span>
+                      <span className="bg-blue-100 px-1.5 py-0.5 rounded">P:{food.nutrients.protein}g</span>
+                      <span className="bg-yellow-100 px-1.5 py-0.5 rounded">C:{food.nutrients.carbs}g</span>
+                      <span className="bg-orange-100 px-1.5 py-0.5 rounded">F:{food.nutrients.fats}g</span>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )}
 
+          {!selectedFood && searchResults.length === 0 && !isLoading && !error && (
+            <div className="text-center py-8 text-coquette-brown-400">
+              <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Search for food items</p>
+              <p className="text-xs mt-1">Try "chicken breast" or "banana"</p>
+            </div>
+          )}
+        </div>
+
+        {/* Selected Food Panel - Fixed at bottom */}
         {selectedFood && adjustedNutrition && (
-          <div className="border-t border-coquette-brown-200 pt-4 mt-2 space-y-3">
+          <div className="border-t border-coquette-brown-200 pt-3 mt-2 space-y-3 flex-shrink-0">
             <div className="bg-coquette-pink-50 p-3 rounded-lg">
-              <h4 className="font-medium text-coquette-brown-600 text-sm mb-2 capitalize">
-                {selectedFood.description.toLowerCase()}
+              <h4 className="font-medium text-coquette-brown-600 text-sm mb-2 capitalize leading-tight">
+                {selectedFood.description.toLowerCase().slice(0, 50)}{selectedFood.description.length > 50 ? '...' : ''}
               </h4>
               
               {/* Servings Input */}
               <div className="flex items-center gap-2 mb-3">
-                <Label className="text-xs text-coquette-brown-500">Servings:</Label>
+                <Label className="text-xs text-coquette-brown-500 whitespace-nowrap">Servings:</Label>
                 <Input
                   type="number"
                   value={servings}
                   onChange={(e) => setServings(e.target.value)}
                   min="0.25"
                   step="0.25"
-                  className="w-20 h-8 text-center border-coquette-brown-200"
+                  className="w-16 h-8 text-center border-coquette-brown-200"
+                  style={{ fontSize: '16px' }}
                 />
-                <span className="text-xs text-coquette-brown-400">
-                  × {selectedFood.servingSize ? `${selectedFood.servingSize} ${selectedFood.servingSizeUnit || 'g'}` : '100g'}
+                <span className="text-xs text-coquette-brown-400 truncate">
+                  × {selectedFood.servingSize ? `${selectedFood.servingSize}${selectedFood.servingSizeUnit || 'g'}` : '100g'}
                 </span>
               </div>
 
-              {/* Calculated Nutrition */}
-              <div className="grid grid-cols-5 gap-2 text-center text-xs">
-                <div className="bg-white rounded p-2">
-                  <div className="font-bold text-coquette-brown-600">{adjustedNutrition.calories}</div>
-                  <div className="text-coquette-brown-400">Cal</div>
+              {/* Calculated Nutrition - Compact for mobile */}
+              <div className="grid grid-cols-5 gap-1 text-center">
+                <div className="bg-white rounded p-1.5">
+                  <div className="font-bold text-sm text-coquette-brown-600">{adjustedNutrition.calories}</div>
+                  <div className="text-[10px] text-coquette-brown-400">Cal</div>
                 </div>
-                <div className="bg-white rounded p-2">
-                  <div className="font-bold text-blue-600">{adjustedNutrition.protein}g</div>
-                  <div className="text-coquette-brown-400">Protein</div>
+                <div className="bg-white rounded p-1.5">
+                  <div className="font-bold text-sm text-blue-600">{adjustedNutrition.protein}g</div>
+                  <div className="text-[10px] text-coquette-brown-400">Prot</div>
                 </div>
-                <div className="bg-white rounded p-2">
-                  <div className="font-bold text-yellow-600">{adjustedNutrition.carbs}g</div>
-                  <div className="text-coquette-brown-400">Carbs</div>
+                <div className="bg-white rounded p-1.5">
+                  <div className="font-bold text-sm text-yellow-600">{adjustedNutrition.carbs}g</div>
+                  <div className="text-[10px] text-coquette-brown-400">Carb</div>
                 </div>
-                <div className="bg-white rounded p-2">
-                  <div className="font-bold text-orange-600">{adjustedNutrition.fats}g</div>
-                  <div className="text-coquette-brown-400">Fats</div>
+                <div className="bg-white rounded p-1.5">
+                  <div className="font-bold text-sm text-orange-600">{adjustedNutrition.fats}g</div>
+                  <div className="text-[10px] text-coquette-brown-400">Fat</div>
                 </div>
-                <div className="bg-white rounded p-2">
-                  <div className="font-bold text-green-600">{adjustedNutrition.fiber}g</div>
-                  <div className="text-coquette-brown-400">Fiber</div>
+                <div className="bg-white rounded p-1.5">
+                  <div className="font-bold text-sm text-green-600">{adjustedNutrition.fiber}g</div>
+                  <div className="text-[10px] text-coquette-brown-400">Fiber</div>
                 </div>
               </div>
             </div>
@@ -313,27 +339,19 @@ export const NutritionSearch: React.FC<NutritionSearchProps> = ({
               <Button
                 variant="outline"
                 onClick={() => setSelectedFood(null)}
-                className="flex-1 border-coquette-brown-200"
+                className="flex-1 border-coquette-brown-200 h-10"
               >
                 <X className="h-4 w-4 mr-1" />
-                Cancel
+                Back
               </Button>
               <Button
                 onClick={handleAddIngredient}
-                className="flex-1 bg-coquette-pink-300 hover:bg-coquette-pink-400 text-coquette-brown-600"
+                className="flex-1 bg-coquette-pink-300 hover:bg-coquette-pink-400 text-coquette-brown-600 h-10"
               >
                 <Plus className="h-4 w-4 mr-1" />
-                Add Ingredient
+                Add
               </Button>
             </div>
-          </div>
-        )}
-
-        {!selectedFood && searchResults.length === 0 && !isLoading && !error && (
-          <div className="text-center py-6 text-coquette-brown-400">
-            <Search className="h-10 w-10 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">Search for food items to add as ingredients</p>
-            <p className="text-xs mt-1">Try brand names like "Perdue" or generic foods</p>
           </div>
         )}
       </DialogContent>
