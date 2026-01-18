@@ -1102,6 +1102,7 @@ const RecipeBank = () => {
       {cropperImage && (
         <ImageCropper
           imageSrc={cropperImage}
+          open={!!cropperImage}
           onCropComplete={handleCroppedImage}
           onCancel={() => {
             setCropperImage(null);
