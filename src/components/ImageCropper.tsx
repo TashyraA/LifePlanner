@@ -1,37 +1,15 @@
-import React, { useState, useRef, useCallback } from 'react';
-import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
-import 'react-image-crop/dist/ReactCrop.css';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Slider } from './ui/slider';
-import { ZoomIn, ZoomOut, RotateCw, Check, X } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCw, Check, X, Move } from 'lucide-react';
 
 interface ImageCropperProps {
   imageSrc: string;
   onCropComplete: (croppedImage: string) => void;
   onCancel: () => void;
-  aspectRatio?: number; // e.g., 1 for square, 16/9 for widescreen
+  aspectRatio?: number;
   open: boolean;
-}
-
-function centerAspectCrop(
-  mediaWidth: number,
-  mediaHeight: number,
-  aspect: number,
-) {
-  return centerCrop(
-    makeAspectCrop(
-      {
-        unit: '%',
-        width: 90,
-      },
-      aspect,
-      mediaWidth,
-      mediaHeight,
-    ),
-    mediaWidth,
-    mediaHeight,
-  );
 }
 
 export const ImageCropper: React.FC<ImageCropperProps> = ({
@@ -41,97 +19,152 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
   aspectRatio = 4 / 3,
   open,
 }) => {
-  const [crop, setCrop] = useState<Crop>();
-  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [scale, setScale] = useState(1);
   const [rotate, setRotate] = useState(0);
-  const imgRef = useRef<HTMLImageElement>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    const { width, height } = e.currentTarget;
-    setCrop(centerAspectCrop(width, height, aspectRatio));
-  }, [aspectRatio]);
+  // Load image
+  useEffect(() => {
+    if (!imageSrc || !open) return;
+    
+    const img = new Image();
+    img.onload = () => {
+      imageRef.current = img;
+      setScale(1);
+      setRotate(0);
+      setPosition({ x: 0, y: 0 });
+      drawCanvas();
+    };
+    img.src = imageSrc;
+  }, [imageSrc, open]);
 
-  const getCroppedImg = useCallback(async () => {
-    const image = imgRef.current;
-    if (!image || !completedCrop) return;
+  // Redraw canvas when parameters change
+  useEffect(() => {
+    drawCanvas();
+  }, [scale, rotate, position]);
 
-    const canvas = document.createElement('canvas');
+  const drawCanvas = () => {
+    const canvas = canvasRef.current;
+    const img = imageRef.current;
+    if (!canvas || !img) return;
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
-    
-    // Calculate the actual crop dimensions
-    const cropX = completedCrop.x * scaleX;
-    const cropY = completedCrop.y * scaleY;
-    const cropWidth = completedCrop.width * scaleX;
-    const cropHeight = completedCrop.height * scaleY;
+    // Set canvas size
+    const canvasSize = 300;
+    canvas.width = canvasSize;
+    canvas.height = canvasSize / aspectRatio;
 
-    // Set canvas size to crop size (max 800px for mobile optimization)
-    const maxSize = 800;
-    const outputWidth = Math.min(cropWidth, maxSize);
-    const outputHeight = (outputWidth / cropWidth) * cropHeight;
-    
-    canvas.width = outputWidth;
-    canvas.height = outputHeight;
+    // Clear canvas
+    ctx.fillStyle = '#f5f0eb';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Apply rotation if needed
-    ctx.save();
-    if (rotate !== 0) {
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate((rotate * Math.PI) / 180);
-      ctx.translate(-canvas.width / 2, -canvas.height / 2);
+    // Calculate image dimensions to fit
+    const imgAspect = img.width / img.height;
+    const canvasAspect = canvas.width / canvas.height;
+    
+    let drawWidth, drawHeight;
+    if (imgAspect > canvasAspect) {
+      drawHeight = canvas.height * scale;
+      drawWidth = drawHeight * imgAspect;
+    } else {
+      drawWidth = canvas.width * scale;
+      drawHeight = drawWidth / imgAspect;
     }
 
-    ctx.drawImage(
-      image,
-      cropX,
-      cropY,
-      cropWidth,
-      cropHeight,
-      0,
-      0,
-      outputWidth,
-      outputHeight
-    );
-    ctx.restore();
+    // Center position with offset
+    const x = (canvas.width - drawWidth) / 2 + position.x;
+    const y = (canvas.height - drawHeight) / 2 + position.y;
 
-    // Convert to JPEG with compression
-    const croppedImageUrl = canvas.toDataURL('image/jpeg', 0.8);
+    // Apply transformations
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate((rotate * Math.PI) / 180);
+    ctx.translate(-canvas.width / 2, -canvas.height / 2);
+    
+    ctx.drawImage(img, x, y, drawWidth, drawHeight);
+    ctx.restore();
+  };
+
+  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
+    setIsDragging(true);
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    setDragStart({ x: clientX - position.x, y: clientY - position.y });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDragging) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    setPosition({
+      x: clientX - dragStart.x,
+      y: clientY - dragStart.y,
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleApply = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Create a higher resolution output
+    const outputCanvas = document.createElement('canvas');
+    const outputSize = 800;
+    outputCanvas.width = outputSize;
+    outputCanvas.height = outputSize / aspectRatio;
+    
+    const ctx = outputCanvas.getContext('2d');
+    if (!ctx) return;
+
+    // Draw current canvas scaled up
+    ctx.drawImage(canvas, 0, 0, outputCanvas.width, outputCanvas.height);
+    
+    // Convert to JPEG
+    const croppedImageUrl = outputCanvas.toDataURL('image/jpeg', 0.85);
     onCropComplete(croppedImageUrl);
-  }, [completedCrop, rotate, onCropComplete]);
+  };
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
-      <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-coquette-brown-600">Adjust Image</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
-          {/* Crop Area */}
-          <div className="flex justify-center bg-coquette-brown-50 rounded-lg p-2 overflow-hidden max-h-[50vh]">
-            <ReactCrop
-              crop={crop}
-              onChange={(_, percentCrop) => setCrop(percentCrop)}
-              onComplete={(c) => setCompletedCrop(c)}
-              aspect={aspectRatio}
-              className="max-h-full"
-            >
-              <img
-                ref={imgRef}
-                src={imageSrc}
-                alt="Crop preview"
-                style={{
-                  transform: `scale(${scale}) rotate(${rotate}deg)`,
-                  maxHeight: '45vh',
-                  width: 'auto',
-                }}
-                onLoad={onImageLoad}
+          {/* Preview Area */}
+          <div 
+            ref={containerRef}
+            className="flex justify-center bg-coquette-brown-50 rounded-lg p-4 overflow-hidden"
+          >
+            <div className="relative border-2 border-dashed border-coquette-pink-300 rounded-lg overflow-hidden">
+              <canvas
+                ref={canvasRef}
+                className="cursor-move max-w-full"
+                style={{ touchAction: 'none' }}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                onTouchStart={handleMouseDown}
+                onTouchMove={handleMouseMove}
+                onTouchEnd={handleMouseUp}
               />
-            </ReactCrop>
+              <div className="absolute top-2 left-2 bg-white/80 rounded px-2 py-1 text-xs text-coquette-brown-500 flex items-center gap-1">
+                <Move className="h-3 w-3" />
+                Drag to adjust
+              </div>
+            </div>
           </div>
 
           {/* Controls */}
@@ -143,11 +176,12 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
                 value={[scale]}
                 onValueChange={(value) => setScale(value[0])}
                 min={0.5}
-                max={2}
+                max={3}
                 step={0.1}
                 className="flex-1"
               />
               <ZoomIn className="h-4 w-4 text-coquette-brown-500" />
+              <span className="text-xs text-coquette-brown-500 w-12">{Math.round(scale * 100)}%</span>
             </div>
 
             {/* Rotate */}
@@ -160,6 +194,18 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
               >
                 <RotateCw className="h-4 w-4 mr-1 scale-x-[-1]" />
                 Left
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setPosition({ x: 0, y: 0 });
+                  setScale(1);
+                  setRotate(0);
+                }}
+                className="border-coquette-brown-200"
+              >
+                Reset
               </Button>
               <Button
                 variant="outline"
@@ -184,7 +230,7 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
               Cancel
             </Button>
             <Button
-              onClick={getCroppedImg}
+              onClick={handleApply}
               className="flex-1 bg-coquette-pink-300 hover:bg-coquette-pink-400 text-coquette-brown-600"
             >
               <Check className="h-4 w-4 mr-2" />

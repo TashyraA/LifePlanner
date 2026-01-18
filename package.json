@@ -53,7 +53,6 @@
     "react-day-picker": "8.10.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.56.3",
-    "react-image-crop": "^11.0.10",
     "react-resizable-panels": "^3.0.1",
     "react-router-dom": "^7.6.0",
     "recharts": "^2.15.3",
