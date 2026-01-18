@@ -285,17 +285,17 @@ const FitnessTracker = () => {
       <div className="flex min-h-screen w-full bg-gradient-to-br from-coquette-brown-50 via-coquette-pink-50 to-white">
         <AppSidebar />
         <SidebarInset className="flex-1 w-full min-w-0">
-          <header className="flex items-center sticky top-0 z-10 gap-4 border-b border-coquette-brown-200 bg-white/80 backdrop-blur-sm px-6 py-4">
+          <header className="flex items-center sticky top-0 z-10 gap-2 sm:gap-4 border-b border-coquette-brown-200 bg-white/80 backdrop-blur-sm px-3 sm:px-6 py-3 sm:py-4">
             <SidebarTrigger />
-            <div className="flex items-center gap-2 flex-1">
-              <Dumbbell className="h-6 w-6 text-coquette-pink-400" />
-              <h1 className="text-2xl font-bold text-coquette-brown-600">Fitness Tracker</h1>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Dumbbell className="h-5 w-5 sm:h-6 sm:w-6 text-coquette-pink-400 flex-shrink-0" />
+              <h1 className="text-lg sm:text-2xl font-bold text-coquette-brown-600 truncate">Fitness Tracker</h1>
             </div>
             <Dialog open={isAddWorkoutOpen} onOpenChange={setIsAddWorkoutOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-coquette-pink-300 hover:bg-coquette-pink-400 text-coquette-brown-600">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Workout
+                <Button className="bg-coquette-pink-300 hover:bg-coquette-pink-400 text-coquette-brown-600 text-xs sm:text-sm px-2 sm:px-4" size="sm">
+                  <Plus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Add Workout</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -547,10 +547,10 @@ const FitnessTracker = () => {
             }}
           />
 
-          <main className="flex-1 overflow-auto p-6">
-            <div className="max-w-7xl mx-auto space-y-6">
+          <main className="flex-1 overflow-auto p-3 sm:p-6">
+            <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
               {/* Weight Tracking Section - Top */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <Card className="border-coquette-brown-200 bg-white/80 backdrop-blur-sm">
                   <CardHeader>
                     <CardTitle className="text-coquette-brown-600 flex items-center gap-2">

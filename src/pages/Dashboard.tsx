@@ -257,22 +257,23 @@ const Dashboard = () => {
       <div className="flex min-h-screen w-full bg-gradient-to-br from-coquette-brown-50 via-coquette-pink-50 to-white">
         <AppSidebar />
         <SidebarInset className="flex-1 w-full min-w-0">
-          <header className="flex items-center sticky top-0 z-10 gap-4 border-b border-coquette-brown-200 bg-white/80 backdrop-blur-sm px-6 py-4">
+          <header className="flex items-center sticky top-0 z-10 gap-2 sm:gap-4 border-b border-coquette-brown-200 bg-white/80 backdrop-blur-sm px-3 sm:px-6 py-3 sm:py-4 flex-wrap">
             <SidebarTrigger />
-            <div className="flex items-center gap-2 flex-1">
-              <DollarSign className="h-6 w-6 text-coquette-pink-400" />
-              <h1 className="text-2xl font-bold text-coquette-brown-600">Finance</h1>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-coquette-pink-400 flex-shrink-0" />
+              <h1 className="text-lg sm:text-2xl font-bold text-coquette-brown-600 truncate">Finance</h1>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-shrink-0">
               <Link to="/finance/budget">
-                <Button variant="outline" size="sm" className="border-coquette-brown-200 text-coquette-brown-600 hover:bg-coquette-pink-100">
-                  Budget Planner
+                <Button variant="outline" size="sm" className="border-coquette-brown-200 text-coquette-brown-600 hover:bg-coquette-pink-100 text-xs sm:text-sm px-2 sm:px-3">
+                  <span className="hidden sm:inline">Budget Planner</span>
+                  <span className="sm:hidden">Budget</span>
                 </Button>
               </Link>
               <Link to="/finance/history">
-                <Button variant="outline" size="sm" className="border-coquette-brown-200 text-coquette-brown-600 hover:bg-coquette-pink-100">
-                  <Receipt className="h-4 w-4 mr-2" />
-                  Payment History
+                <Button variant="outline" size="sm" className="border-coquette-brown-200 text-coquette-brown-600 hover:bg-coquette-pink-100 text-xs sm:text-sm px-2 sm:px-3">
+                  <Receipt className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Payment History</span>
                 </Button>
               </Link>
             </div>
@@ -297,63 +298,66 @@ const Dashboard = () => {
              }}
            />
 
-          <main className="flex-1 overflow-auto p-6">
-            <div className="max-w-7xl mx-auto space-y-6">
+          <main className="flex-1 overflow-auto p-3 sm:p-6">
+            <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
               {/* Financial Overview */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
                 <Card className="border-coquette-brown-200 bg-gradient-to-br from-white to-coquette-pink-100">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-coquette-brown-600 text-sm flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4" />
-                      Total Income
+                  <CardHeader className="pb-1 sm:pb-2">
+                    <CardTitle className="text-coquette-brown-600 text-xs sm:text-sm flex items-center gap-1 sm:gap-2">
+                      <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Total Income</span>
+                      <span className="sm:hidden">Income</span>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-2xl font-bold text-coquette-brown-600">${totalIncome.toFixed(2)}</p>
-                    <p className="text-xs text-coquette-brown-500 mt-1">Monthly</p>
+                  <CardContent className="pt-0">
+                    <p className="text-lg sm:text-2xl font-bold text-coquette-brown-600">${totalIncome.toFixed(0)}</p>
+                    <p className="text-xs text-coquette-brown-500 mt-1 hidden sm:block">Monthly</p>
                   </CardContent>
                 </Card>
 
                 <Card className="border-coquette-brown-200 bg-gradient-to-br from-white to-coquette-brown-100">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-coquette-brown-600 text-sm flex items-center gap-2">
-                      <TrendingDown className="h-4 w-4" />
-                      Remaining Expenses
+                  <CardHeader className="pb-1 sm:pb-2">
+                    <CardTitle className="text-coquette-brown-600 text-xs sm:text-sm flex items-center gap-1 sm:gap-2">
+                      <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Remaining Expenses</span>
+                      <span className="sm:hidden">To Pay</span>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-2xl font-bold text-coquette-brown-600">${unpaidExpenses.toFixed(2)}</p>
-                    <p className="text-xs text-coquette-brown-500 mt-1">Left to pay this month</p>
+                  <CardContent className="pt-0">
+                    <p className="text-lg sm:text-2xl font-bold text-coquette-brown-600">${unpaidExpenses.toFixed(0)}</p>
+                    <p className="text-xs text-coquette-brown-500 mt-1 hidden sm:block">Left to pay this month</p>
                   </CardContent>
                 </Card>
 
                 <Card className="border-coquette-brown-200 bg-gradient-to-br from-white to-green-50">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-coquette-brown-600 text-sm flex items-center gap-2">
-                      <Receipt className="h-4 w-4 text-green-500" />
-                      Paid This Month
+                  <CardHeader className="pb-1 sm:pb-2">
+                    <CardTitle className="text-coquette-brown-600 text-xs sm:text-sm flex items-center gap-1 sm:gap-2">
+                      <Receipt className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
+                      <span className="hidden sm:inline">Paid This Month</span>
+                      <span className="sm:hidden">Paid</span>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-2xl font-bold text-green-600">${paidExpenses.toFixed(2)}</p>
-                    <p className="text-xs text-coquette-brown-500 mt-1">of ${currentMonthExpenses.toFixed(2)} total</p>
+                  <CardContent className="pt-0">
+                    <p className="text-lg sm:text-2xl font-bold text-green-600">${paidExpenses.toFixed(0)}</p>
+                    <p className="text-xs text-coquette-brown-500 mt-1 hidden sm:block">of ${currentMonthExpenses.toFixed(2)} total</p>
                   </CardContent>
                 </Card>
 
                 <Card className="border-coquette-brown-200 bg-gradient-to-br from-white to-coquette-pink-100">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-coquette-brown-600 text-sm flex items-center gap-2">
-                      <Wallet className="h-4 w-4" />
-                      Current Balance
+                  <CardHeader className="pb-1 sm:pb-2">
+                    <CardTitle className="text-coquette-brown-600 text-xs sm:text-sm flex items-center gap-1 sm:gap-2">
+                      <Wallet className="h-3 w-3 sm:h-4 sm:w-4" />
+                      Balance
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-2xl font-bold text-coquette-brown-600">${currentBalance.toFixed(2)}</p>
-                    <p className="text-xs text-coquette-brown-500 mt-1">Available</p>
+                  <CardContent className="pt-0">
+                    <p className="text-lg sm:text-2xl font-bold text-coquette-brown-600">${currentBalance.toFixed(0)}</p>
+                    <p className="text-xs text-coquette-brown-500 mt-1 hidden sm:block">Available</p>
                   </CardContent>
                 </Card>
 
-                <Card className="border-coquette-brown-200 bg-gradient-to-br from-white to-coquette-brown-100 cursor-pointer hover:shadow-lg transition-all">
+                <Card className="border-coquette-brown-200 bg-gradient-to-br from-white to-coquette-brown-100 cursor-pointer hover:shadow-lg transition-all col-span-2 sm:col-span-1">
                   <CardHeader>
                     <CardTitle className="text-coquette-brown-600 text-sm flex items-center justify-between">
                       <div className="flex items-center gap-2">

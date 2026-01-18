@@ -58,88 +58,92 @@ const Index = () => {
       <div className="flex min-h-screen w-full bg-gradient-to-br from-coquette-brown-50 via-coquette-pink-50 to-white">
         <AppSidebar />
         <SidebarInset className="flex-1 w-full min-w-0">
-          <header className="flex items-center sticky top-0 z-10 gap-4 border-b border-coquette-brown-200 bg-white/80 backdrop-blur-sm px-6 py-4">
+          <header className="flex items-center sticky top-0 z-10 gap-2 sm:gap-4 border-b border-coquette-brown-200 bg-white/80 backdrop-blur-sm px-3 sm:px-6 py-3 sm:py-4">
             <SidebarTrigger />
             <div className="flex items-center gap-2">
-              <Heart className="h-6 w-6 text-coquette-pink-400" fill="currentColor" />
-              <h1 className="text-2xl font-bold text-coquette-brown-600">My Dashboard</h1>
+              <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-coquette-pink-400" fill="currentColor" />
+              <h1 className="text-lg sm:text-2xl font-bold text-coquette-brown-600">My Dashboard</h1>
             </div>
           </header>
 
-          <main className="flex-1 overflow-auto p-6">
+          <main className="flex-1 overflow-auto p-3 sm:p-6">
             <div className="max-w-7xl mx-auto space-y-6">
               {/* Welcome Section */}
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-coquette-pink-300 to-coquette-pink-400 rounded-full mb-4">
-                  <Heart className="text-white" size={40} fill="white" />
+              <div className="text-center mb-4 sm:mb-8">
+                <div className="inline-flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 bg-gradient-to-br from-coquette-pink-300 to-coquette-pink-400 rounded-full mb-3 sm:mb-4">
+                  <Heart className="text-white" size={28} fill="white" />
                 </div>
-                <h1 className="text-4xl font-bold text-coquette-brown-600 mb-2">
+                <h1 className="text-2xl sm:text-4xl font-bold text-coquette-brown-600 mb-2">
                   Welcome Back!
                 </h1>
-                <p className="text-xl text-coquette-brown-500 flex items-center justify-center gap-2">
-                  <Sparkles size={20} />
+                <p className="text-sm sm:text-xl text-coquette-brown-500 flex items-center justify-center gap-2">
+                  <Sparkles size={16} className="sm:hidden" />
+                  <Sparkles size={20} className="hidden sm:block" />
                   Here's your life at a glance
-                  <Sparkles size={20} />
+                  <Sparkles size={16} className="sm:hidden" />
+                  <Sparkles size={20} className="hidden sm:block" />
                 </p>
               </div>
 
               {/* Quick Stats Overview */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                 <Card className="border-coquette-brown-200 bg-gradient-to-br from-white to-coquette-pink-100">
-                  <CardHeader>
-                    <CardTitle className="text-coquette-brown-600 text-sm flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      This Week's Events
+                  <CardHeader className="pb-1 sm:pb-2">
+                    <CardTitle className="text-coquette-brown-600 text-xs sm:text-sm flex items-center gap-1 sm:gap-2">
+                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">This Week's Events</span>
+                      <span className="sm:hidden">Events</span>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-3xl font-bold text-coquette-brown-600">{thisWeekEvents.length}</p>
-                    <p className="text-xs text-coquette-brown-500 mt-1">Upcoming events</p>
+                  <CardContent className="pt-0">
+                    <p className="text-2xl sm:text-3xl font-bold text-coquette-brown-600">{thisWeekEvents.length}</p>
+                    <p className="text-xs text-coquette-brown-500 mt-1 hidden sm:block">Upcoming events</p>
                   </CardContent>
                 </Card>
 
                 <Card className="border-coquette-brown-200 bg-gradient-to-br from-white to-green-100">
-                  <CardHeader>
-                    <CardTitle className="text-coquette-brown-600 text-sm flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4" />
-                      Today's Habits
+                  <CardHeader className="pb-1 sm:pb-2">
+                    <CardTitle className="text-coquette-brown-600 text-xs sm:text-sm flex items-center gap-1 sm:gap-2">
+                      <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Today's Habits</span>
+                      <span className="sm:hidden">Habits</span>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-3xl font-bold text-green-600">{habitsCompletedToday}/{totalHabits}</p>
-                    <p className="text-xs text-coquette-brown-500 mt-1">Completed today</p>
+                  <CardContent className="pt-0">
+                    <p className="text-2xl sm:text-3xl font-bold text-green-600">{habitsCompletedToday}/{totalHabits}</p>
+                    <p className="text-xs text-coquette-brown-500 mt-1 hidden sm:block">Completed today</p>
                   </CardContent>
                 </Card>
 
                 <Card className="border-coquette-brown-200 bg-gradient-to-br from-white to-coquette-brown-100">
-                  <CardHeader>
-                    <CardTitle className="text-coquette-brown-600 text-sm flex items-center gap-2">
-                      <DollarSign className="h-4 w-4" />
-                      Current Balance
+                  <CardHeader className="pb-1 sm:pb-2">
+                    <CardTitle className="text-coquette-brown-600 text-xs sm:text-sm flex items-center gap-1 sm:gap-2">
+                      <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
+                      Balance
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-3xl font-bold text-coquette-brown-600">${currentBalance.toFixed(0)}</p>
-                    <p className="text-xs text-coquette-brown-500 mt-1">Available funds</p>
+                  <CardContent className="pt-0">
+                    <p className="text-2xl sm:text-3xl font-bold text-coquette-brown-600">${currentBalance.toFixed(0)}</p>
+                    <p className="text-xs text-coquette-brown-500 mt-1 hidden sm:block">Available funds</p>
                   </CardContent>
                 </Card>
 
                 <Card className="border-coquette-brown-200 bg-gradient-to-br from-white to-coquette-pink-100">
-                  <CardHeader>
-                    <CardTitle className="text-coquette-brown-600 text-sm flex items-center gap-2">
-                      <Target className="h-4 w-4" />
-                      Savings Goal
+                  <CardHeader className="pb-1 sm:pb-2">
+                    <CardTitle className="text-coquette-brown-600 text-xs sm:text-sm flex items-center gap-1 sm:gap-2">
+                      <Target className="h-3 w-3 sm:h-4 sm:w-4" />
+                      Savings
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-3xl font-bold text-coquette-brown-600">{savingsProgress.toFixed(0)}%</p>
+                  <CardContent className="pt-0">
+                    <p className="text-2xl sm:text-3xl font-bold text-coquette-brown-600">{savingsProgress.toFixed(0)}%</p>
                     <Progress value={savingsProgress} className="h-2 mt-2" />
                   </CardContent>
                 </Card>
               </div>
 
               {/* Feature Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 <Link to="/college">
                   <Card className="border-coquette-brown-200 bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer h-full">
                     <CardHeader>

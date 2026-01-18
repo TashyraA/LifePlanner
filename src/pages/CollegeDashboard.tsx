@@ -204,11 +204,11 @@ const CollegeDashboard = () => {
       <div className="flex min-h-screen w-full bg-gradient-to-br from-coquette-brown-50 via-coquette-pink-50 to-white">
         <AppSidebar />
         <SidebarInset className="flex-1 w-full min-w-0 flex flex-col">
-          <header className="flex items-center justify-between sticky top-0 z-10 gap-4 border-b border-coquette-brown-200 bg-white/80 backdrop-blur-sm px-6 py-4">
+          <header className="flex items-center justify-between sticky top-0 z-10 gap-2 sm:gap-4 border-b border-coquette-brown-200 bg-white/80 backdrop-blur-sm px-3 sm:px-6 py-3 sm:py-4">
             <div className="flex items-center gap-2">
               <SidebarTrigger />
-              <GraduationCap className="h-6 w-6 text-coquette-pink-400" />
-              <h1 className="text-2xl font-bold text-coquette-brown-600">College Dashboard</h1>
+              <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6 text-coquette-pink-400" />
+              <h1 className="text-lg sm:text-2xl font-bold text-coquette-brown-600">College</h1>
             </div>
           </header>
 
@@ -232,26 +232,26 @@ const CollegeDashboard = () => {
           />
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-            <TabsList className="w-full h-auto rounded-none border-b border-coquette-brown-200 bg-white px-6 py-0">
-              <TabsTrigger value="overview" className="text-coquette-brown-600 data-[state=active]:text-coquette-pink-400 data-[state=active]:border-b-2 data-[state=active]:border-coquette-pink-400 rounded-none border-b-2 border-transparent">
+            <TabsList className="w-full h-auto rounded-none border-b border-coquette-brown-200 bg-white px-3 sm:px-6 py-0">
+              <TabsTrigger value="overview" className="text-xs sm:text-sm text-coquette-brown-600 data-[state=active]:text-coquette-pink-400 data-[state=active]:border-b-2 data-[state=active]:border-coquette-pink-400 rounded-none border-b-2 border-transparent">
                 Overview
               </TabsTrigger>
-              <TabsTrigger value="notebook" className="text-coquette-brown-600 data-[state=active]:text-coquette-pink-400 data-[state=active]:border-b-2 data-[state=active]:border-coquette-pink-400 rounded-none border-b-2 border-transparent">
-                Class Notebook
+              <TabsTrigger value="notebook" className="text-xs sm:text-sm text-coquette-brown-600 data-[state=active]:text-coquette-pink-400 data-[state=active]:border-b-2 data-[state=active]:border-coquette-pink-400 rounded-none border-b-2 border-transparent">
+                Notebook
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="flex-1 overflow-auto">
-          <main className="p-6">
-            <div className="max-w-7xl mx-auto space-y-6">
+          <main className="p-3 sm:p-6">
+            <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
               {/* Stats Overview */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
                 <Card className="border-coquette-brown-200 bg-gradient-to-br from-white to-coquette-pink-100">
-                  <CardHeader>
-                    <CardTitle className="text-coquette-brown-600 text-sm">Total Assignments</CardTitle>
+                  <CardHeader className="pb-1 sm:pb-2">
+                    <CardTitle className="text-coquette-brown-600 text-xs sm:text-sm">Assignments</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-3xl font-bold text-coquette-brown-600">{totalAssignments}</p>
+                  <CardContent className="pt-0">
+                    <p className="text-2xl sm:text-3xl font-bold text-coquette-brown-600">{totalAssignments}</p>
                   </CardContent>
                 </Card>
 
@@ -259,24 +259,24 @@ const CollegeDashboard = () => {
                   className="border-coquette-brown-200 bg-gradient-to-br from-white to-green-100 cursor-pointer hover:shadow-lg transition-all"
                   onClick={() => setIsCompletedDialogOpen(true)}
                 >
-                  <CardHeader>
-                    <CardTitle className="text-coquette-brown-600 text-sm flex items-center justify-between">
+                  <CardHeader className="pb-1 sm:pb-2">
+                    <CardTitle className="text-coquette-brown-600 text-xs sm:text-sm flex items-center justify-between">
                       Completed
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-3xl font-bold text-green-600">{completedCount}</p>
-                    <p className="text-xs text-green-600 mt-1">Click to view</p>
+                  <CardContent className="pt-0">
+                    <p className="text-2xl sm:text-3xl font-bold text-green-600">{completedCount}</p>
+                    <p className="text-xs text-green-600 mt-1 hidden sm:block">Click to view</p>
                   </CardContent>
                 </Card>
 
                 <Card className="border-coquette-brown-200 bg-gradient-to-br from-white to-coquette-brown-100">
-                  <CardHeader>
-                    <CardTitle className="text-coquette-brown-600 text-sm">In Progress</CardTitle>
+                  <CardHeader className="pb-1 sm:pb-2">
+                    <CardTitle className="text-coquette-brown-600 text-xs sm:text-sm">In Progress</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-3xl font-bold text-yellow-600">
+                  <CardContent className="pt-0">
+                    <p className="text-2xl sm:text-3xl font-bold text-yellow-600">
                       {assignments.filter(a => a.status === 'in-progress').length}
                     </p>
                   </CardContent>

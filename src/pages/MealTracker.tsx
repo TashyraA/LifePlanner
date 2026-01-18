@@ -587,19 +587,21 @@ const MealTracker = () => {
       <div className="flex min-h-screen w-full bg-gradient-to-br from-coquette-brown-50 via-coquette-pink-50 to-white">
         <AppSidebar />
         <SidebarInset className="flex-1 w-full min-w-0">
-          <header className="flex items-center sticky top-0 z-10 gap-4 border-b border-coquette-brown-200 bg-white/80 backdrop-blur-sm px-6 py-4">
+          <header className="flex items-center sticky top-0 z-10 gap-2 sm:gap-4 border-b border-coquette-brown-200 bg-white/80 backdrop-blur-sm px-3 sm:px-6 py-3 sm:py-4">
             <SidebarTrigger />
-            <div className="flex items-center gap-2">
-              <UtensilsCrossed className="h-6 w-6 text-coquette-pink-400" />
-              <h1 className="text-2xl font-bold text-coquette-brown-600">Meal Tracker</h1>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <UtensilsCrossed className="h-5 w-5 sm:h-6 sm:w-6 text-coquette-pink-400 flex-shrink-0" />
+              <h1 className="text-lg sm:text-2xl font-bold text-coquette-brown-600 truncate">Meal Tracker</h1>
             </div>
-            <div className="ml-auto">
+            <div className="ml-auto flex-shrink-0">
               <Button
                 variant="outline"
-                className="border-coquette-brown-200 text-coquette-brown-600 hover:bg-coquette-pink-50"
+                size="sm"
+                className="border-coquette-brown-200 text-coquette-brown-600 hover:bg-coquette-pink-50 text-xs sm:text-sm"
                 onClick={() => navigate('/recipes')}
               >
-                Open Recipe Bank
+                <span className="hidden sm:inline">Open Recipe Bank</span>
+                <span className="sm:hidden">Recipes</span>
               </Button>
             </div>
           </header>
@@ -623,8 +625,8 @@ const MealTracker = () => {
              }}
            />
 
-          <main className="flex-1 overflow-auto p-6">
-            <div className="max-w-7xl mx-auto space-y-6">
+          <main className="flex-1 overflow-auto p-3 sm:p-6">
+            <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
               {/* Nutrition Overview */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="border-coquette-brown-200 bg-white/80 backdrop-blur-sm">
@@ -1421,17 +1423,18 @@ const MealTracker = () => {
                       </CardContent>
                     </Card>
 
-                    {/* Days Grid */}
-                    <div className="overflow-x-auto pb-4">
-                      <div className="grid grid-cols-7 gap-4 min-w-[900px]">
+                    {/* Days Grid - Mobile: 2 columns, Desktop: 7 columns */}
+                    <div className="overflow-x-auto pb-4 -mx-3 px-3 sm:mx-0 sm:px-0">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4 min-w-0">
                         {daysOfWeek.map(day => {
                           const dayMeals = meals.filter(m => m.day === day);
                           return (
-                            <div key={day} className="space-y-3 min-w-[120px]">
-                              <h3 className="font-semibold text-coquette-brown-600 text-center pb-2 border-b border-coquette-brown-200 sticky top-0 bg-white/80 backdrop-blur-sm">
-                                {day}
+                            <div key={day} className="space-y-2 sm:space-y-3 min-w-0">
+                              <h3 className="font-semibold text-coquette-brown-600 text-center text-sm sm:text-base pb-2 border-b border-coquette-brown-200 sticky top-0 bg-white/80 backdrop-blur-sm">
+                                <span className="hidden sm:inline">{day}</span>
+                                <span className="sm:hidden">{day.slice(0, 3)}</span>
                               </h3>
-                              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                              <div className="space-y-2 sm:space-y-3 max-h-[300px] sm:max-h-[500px] overflow-y-auto pr-1">
                               {dayMeals.map(meal => {
                               const isConsumed = consumedMeals.has(meal.id);
                               return (

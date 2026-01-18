@@ -155,22 +155,22 @@ const Planner = () => {
             }}
           />
 
-          <header className="flex items-center sticky top-0 z-10 gap-4 border-b border-coquette-brown-200 bg-white/80 backdrop-blur-sm px-6 py-4">
+          <header className="flex items-center sticky top-0 z-10 gap-2 sm:gap-4 border-b border-coquette-brown-200 bg-white/80 backdrop-blur-sm px-3 sm:px-6 py-3 sm:py-4">
             <SidebarTrigger />
             <div className="flex items-center gap-2">
-              <Calendar className="h-6 w-6 text-coquette-pink-400" />
-              <h1 className="text-2xl font-bold text-coquette-brown-600">Monthly Planner</h1>
+              <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-coquette-pink-400" />
+              <h1 className="text-lg sm:text-2xl font-bold text-coquette-brown-600">Monthly Planner</h1>
             </div>
           </header>
 
-          <main className="flex-1 overflow-auto p-6">
+          <main className="flex-1 overflow-auto p-3 sm:p-6">
             <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-coquette-brown-600 mb-2">{currentYear}</h2>
-                <p className="text-coquette-brown-500">Click on any month to view and plan, or add a cover image</p>
+              <div className="text-center mb-4 sm:mb-8">
+                <h2 className="text-2xl sm:text-3xl font-bold text-coquette-brown-600 mb-2">{currentYear}</h2>
+                <p className="text-sm sm:text-base text-coquette-brown-500">Click on any month to view and plan</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
                 {months.map((month, index) => {
                   const monthData = getMonthData(index, currentYear);
                   const monthImageKey = `${index}_${currentYear}`;

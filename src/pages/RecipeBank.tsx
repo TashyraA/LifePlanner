@@ -310,23 +310,23 @@ const RecipeBank = () => {
       <div className="flex min-h-screen w-full bg-gradient-to-br from-coquette-brown-50 via-coquette-pink-50 to-white">
         <AppSidebar />
         <SidebarInset className="flex-1 w-full min-w-0">
-          <header className="flex items-center sticky top-0 z-10 gap-4 border-b border-coquette-brown-200 bg-white/80 backdrop-blur-sm px-6 py-4">
+          <header className="flex items-center sticky top-0 z-10 gap-2 sm:gap-4 border-b border-coquette-brown-200 bg-white/80 backdrop-blur-sm px-3 sm:px-6 py-3 sm:py-4 flex-wrap">
             <SidebarTrigger />
             <Link to="/meals">
-              <Button variant="ghost" size="sm" className="text-coquette-brown-500 hover:bg-coquette-brown-100">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Meal Planner
+              <Button variant="ghost" size="sm" className="text-coquette-brown-500 hover:bg-coquette-brown-100 text-xs sm:text-sm px-2 sm:px-3">
+                <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Back to Meal Planner</span>
               </Button>
             </Link>
-            <div className="flex items-center gap-2 flex-1">
-              <BookOpen className="h-6 w-6 text-coquette-pink-400" />
-              <h1 className="text-2xl font-bold text-coquette-brown-600">Recipe Bank</h1>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-coquette-pink-400 flex-shrink-0" />
+              <h1 className="text-lg sm:text-2xl font-bold text-coquette-brown-600 truncate">Recipe Bank</h1>
             </div>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-coquette-pink-300 hover:bg-coquette-pink-400 text-coquette-brown-600">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Recipe
+                <Button className="bg-coquette-pink-300 hover:bg-coquette-pink-400 text-coquette-brown-600 text-xs sm:text-sm px-2 sm:px-4" size="sm">
+                  <Plus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Add Recipe</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -547,10 +547,10 @@ const RecipeBank = () => {
             </Dialog>
           </header>
 
-          <main className="flex-1 overflow-auto p-6">
+          <main className="flex-1 overflow-auto p-3 sm:p-6">
             <div className="max-w-7xl mx-auto">
               {recipes.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
                   {recipes.map(recipe => (
                     <Card
                       key={recipe.id}
@@ -562,7 +562,7 @@ const RecipeBank = () => {
                           <img
                             src={recipe.image}
                             alt={recipe.name}
-                            className="w-full h-48 object-cover rounded-t-lg"
+                            className="w-full h-32 sm:h-48 object-cover rounded-t-lg"
                           />
                           {recipe.videoUrl && (
                             <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-t-lg">
