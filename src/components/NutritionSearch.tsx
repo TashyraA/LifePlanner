@@ -37,7 +37,7 @@ interface NutritionSearchProps {
   onAddIngredient: (ingredient: FoodIngredient) => void;
 }
 
-const USDA_API_KEY = 'DEMO_KEY';
+const USDA_API_KEY = 'dz9V0awKAmsdP4205Gk6aa4vcIsEieACMDIyiMWm';
 const USDA_BASE_URL = 'https://api.nal.usda.gov/fdc/v1';
 
 // Simple in-memory cache to reduce API calls
