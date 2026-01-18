@@ -13,9 +13,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { UtensilsCrossed, Plus, Upload, Trash2, Edit, Calculator, ChefHat, TrendingUp, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { UtensilsCrossed, Plus, Upload, Trash2, Edit, Calculator, ChefHat, TrendingUp, AlertCircle, ChevronDown, ChevronUp, Crop } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { CurvedArches } from '../components/PageHeaderImages';
+import { ImageCropper } from '../components/ImageCropper';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -92,6 +93,10 @@ const MealTracker = () => {
       year: 'numeric'
     });
   };
+
+  // Image cropper state
+  const [cropperImage, setCropperImage] = useState<string | null>(null);
+  const [cropperTarget, setCropperTarget] = useState<'newMeal' | 'editMeal' | null>(null);
 
   // Nutrition Calculator State
   const [calculatorData, setCalculatorData] = useState(() => {
@@ -1129,18 +1134,35 @@ const MealTracker = () => {
                                 if (file) {
                                   const reader = new FileReader();
                                   reader.onloadend = () => {
-                                    setNewMeal({ ...newMeal, image: reader.result as string });
+                                    setCropperImage(reader.result as string);
+                                    setCropperTarget('newMeal');
                                   };
                                   reader.readAsDataURL(file);
                                 }
                               }}
                               className="border-coquette-brown-200"
                             />
+                            <p className="text-xs text-coquette-brown-400 mt-1">You can crop and adjust after selecting</p>
                           </div>
 
                           {newMeal.image && (
                             <div>
-                              <Label>Preview</Label>
+                              <div className="flex items-center justify-between mb-1">
+                                <Label>Preview</Label>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setCropperImage(newMeal.image);
+                                    setCropperTarget('newMeal');
+                                  }}
+                                  className="text-xs text-coquette-pink-500 hover:text-coquette-pink-600"
+                                >
+                                  <Crop className="h-3 w-3 mr-1" />
+                                  Re-crop
+                                </Button>
+                              </div>
                               <img src={newMeal.image} alt="Preview" className="w-full h-32 object-contain rounded-lg border border-coquette-brown-200 bg-coquette-brown-50" />
                             </div>
                           )}
@@ -1618,18 +1640,35 @@ const MealTracker = () => {
                                       if (file) {
                                         const reader = new FileReader();
                                         reader.onloadend = () => {
-                                          setEditMealData({ ...editMealData, image: reader.result as string });
+                                          setCropperImage(reader.result as string);
+                                          setCropperTarget('editMeal');
                                         };
                                         reader.readAsDataURL(file);
                                       }
                                     }}
                                     className="border-coquette-brown-200"
                                   />
+                                  <p className="text-xs text-coquette-brown-400 mt-1">You can crop and adjust after selecting</p>
                                 </div>
 
                                 {editMealData.image && (
                                   <div>
-                                    <Label>Current Photo</Label>
+                                    <div className="flex items-center justify-between mb-1">
+                                      <Label>Current Photo</Label>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                          setCropperImage(editMealData.image);
+                                          setCropperTarget('editMeal');
+                                        }}
+                                        className="text-xs text-coquette-pink-500 hover:text-coquette-pink-600"
+                                      >
+                                        <Crop className="h-3 w-3 mr-1" />
+                                        Re-crop
+                                      </Button>
+                                    </div>
                                     <img src={editMealData.image} alt="Preview" className="w-full h-32 object-contain rounded-lg border border-coquette-brown-200 bg-coquette-brown-50" />
                                   </div>
                                 )}
@@ -1710,6 +1749,28 @@ const MealTracker = () => {
                     </div>
                   </DialogContent>
                 </Dialog>
+              )}
+
+              {/* Image Cropper Dialog */}
+              {cropperImage && (
+                <ImageCropper
+                  imageSrc={cropperImage}
+                  open={!!cropperImage}
+                  aspectRatio={4 / 3}
+                  onCropComplete={(croppedImage) => {
+                    if (cropperTarget === 'newMeal') {
+                      setNewMeal({ ...newMeal, image: croppedImage });
+                    } else if (cropperTarget === 'editMeal') {
+                      setEditMealData({ ...editMealData, image: croppedImage });
+                    }
+                    setCropperImage(null);
+                    setCropperTarget(null);
+                  }}
+                  onCancel={() => {
+                    setCropperImage(null);
+                    setCropperTarget(null);
+                  }}
+                />
               )}
             </div>
           </main>

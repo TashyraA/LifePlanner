@@ -11,10 +11,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BookOpen, Plus, Trash2, Edit, Link as LinkIcon, Play, Calendar, ShoppingCart, ArrowLeft } from 'lucide-react';
+import { BookOpen, Plus, Trash2, Edit, Link as LinkIcon, Play, Calendar, ShoppingCart, ArrowLeft, Crop } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { validateAndCompressImage } from '../lib/imageCompression';
 import { Link } from 'react-router-dom';
+import { ImageCropper } from '../components/ImageCropper';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -30,6 +31,10 @@ const RecipeBank = () => {
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedMealType, setSelectedMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('lunch');
   const [loadingVideo, setLoadingVideo] = useState(false);
+
+  // Image cropper state
+  const [cropperImage, setCropperImage] = useState<string | null>(null);
+  const [cropperTarget, setCropperTarget] = useState<'newRecipe' | 'editRecipe' | null>(null);
 
   const [newRecipe, setNewRecipe] = useState({
     name: '',
@@ -153,22 +158,23 @@ const RecipeBank = () => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean = false) => {
     const file = e.target.files?.[0];
     if (file) {
-      try {
-        const compressedImage = await validateAndCompressImage(file);
-        if (isEdit) {
-          setEditRecipeData({ ...editRecipeData, image: compressedImage });
-        } else {
-          setNewRecipe({ ...newRecipe, image: compressedImage });
-        }
-      } catch (error) {
-        console.error('Error compressing image:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to process image. Please try again.',
-          variant: 'destructive'
-        });
-      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCropperImage(reader.result as string);
+        setCropperTarget(isEdit ? 'editRecipe' : 'newRecipe');
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  const handleCroppedImage = (croppedImage: string) => {
+    if (cropperTarget === 'newRecipe') {
+      setNewRecipe({ ...newRecipe, image: croppedImage });
+    } else if (cropperTarget === 'editRecipe') {
+      setEditRecipeData({ ...editRecipeData, image: croppedImage });
+    }
+    setCropperImage(null);
+    setCropperTarget(null);
   };
 
   const handleAddRecipe = () => {
@@ -396,6 +402,21 @@ const RecipeBank = () => {
                         <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
                           <Play className="h-16 w-16 text-white" />
                         </div>
+                      )}
+                      {!newRecipe.videoUrl && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setCropperImage(newRecipe.image!);
+                            setCropperTarget('newRecipe');
+                          }}
+                          className="absolute top-2 right-2 bg-white/90 hover:bg-white border-coquette-pink-300"
+                        >
+                          <Crop className="h-4 w-4 mr-1" />
+                          Re-crop
+                        </Button>
                       )}
                     </div>
                   )}
@@ -850,6 +871,21 @@ const RecipeBank = () => {
                     <Play className="h-16 w-16 text-white" />
                   </div>
                 )}
+                {!editRecipeData.videoUrl && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setCropperImage(editRecipeData.image!);
+                      setCropperTarget('editRecipe');
+                    }}
+                    className="absolute top-2 right-2 bg-white/90 hover:bg-white border-coquette-pink-300"
+                  >
+                    <Crop className="h-4 w-4 mr-1" />
+                    Re-crop
+                  </Button>
+                )}
               </div>
             )}
 
@@ -996,6 +1032,18 @@ const RecipeBank = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Image Cropper */}
+      {cropperImage && (
+        <ImageCropper
+          imageSrc={cropperImage}
+          onCropComplete={handleCroppedImage}
+          onCancel={() => {
+            setCropperImage(null);
+            setCropperTarget(null);
+          }}
+        />
+      )}
     </SidebarProvider>
   );
 };

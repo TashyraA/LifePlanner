@@ -3,7 +3,7 @@ import { indexedDB } from './indexedDB';
 
 const MAX_IMAGE_SIZE = 500 * 1024; // 500KB max per image
 const COMPRESSION_QUALITY = 0.7; // JPEG quality for compression
-const MAX_DIMENSION = 800; // Max width or height in pixels
+const MAX_DIMENSION = 1200; // Max width or height in pixels (good for all screens)
 
 export const compressImage = async (base64String: string): Promise<string> => {
   // If not a data URL, return as-is (external URL)
