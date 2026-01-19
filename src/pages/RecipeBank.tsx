@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BookOpen, Plus, Trash2, Edit, Link as LinkIcon, Play, Calendar, ShoppingCart, ArrowLeft, Crop, Search } from 'lucide-react';
+import { BookOpen, Plus, Trash2, Edit, Link as LinkIcon, Play, Calendar, ShoppingCart, ArrowLeft, Crop, Search, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { validateAndCompressImage } from '../lib/imageCompression';
 import { Link } from 'react-router-dom';
@@ -428,12 +428,16 @@ const RecipeBank = () => {
 
                   <div>
                     <Label className="text-coquette-brown-600">Or Upload Image</Label>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleImageUpload(e, false)}
-                      className="border-coquette-brown-200"
-                    />
+                    <label className="flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed border-coquette-brown-200 rounded-lg cursor-pointer hover:bg-coquette-pink-50 transition-colors">
+                      <Upload className="h-5 w-5 text-coquette-brown-500" />
+                      <span className="text-sm text-coquette-brown-600">{newRecipe.image ? 'Change Image' : 'Choose Image'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, false)}
+                        className="hidden"
+                      />
+                    </label>
                   </div>
 
                   {/* Ingredients Section - Search & Add */}
@@ -891,12 +895,16 @@ const RecipeBank = () => {
 
             <div>
               <Label className="text-coquette-brown-600">Or Upload Image</Label>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageUpload(e, true)}
-                className="border-coquette-brown-200"
-              />
+              <label className="flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed border-coquette-brown-200 rounded-lg cursor-pointer hover:bg-coquette-pink-50 transition-colors">
+                <Upload className="h-5 w-5 text-coquette-brown-500" />
+                <span className="text-sm text-coquette-brown-600">{editRecipeData.image ? 'Change Image' : 'Choose Image'}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e, true)}
+                  className="hidden"
+                />
+              </label>
             </div>
 
             <div className="space-y-3">

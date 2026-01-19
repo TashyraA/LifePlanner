@@ -11,6 +11,7 @@ import { usePlanner } from '../contexts/PlannerContext';
 import { useToast } from '@/hooks/use-toast';
 import { BorderImage } from '../components/PageHeaderImages';
 import { validateAndCompressImage } from '../lib/imageCompression';
+import { ImageCropper } from '../components/ImageCropper';
 
 const months = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -28,14 +29,16 @@ const Planner = () => {
   const [pendingImage, setPendingImage] = useState('');
   const [pendingPosition, setPendingPosition] = useState({ x: 50, y: 50 });
   const [monthImages, setMonthImages] = useState<{ [key: string]: string }>({});
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperImage, setCropperImage] = useState<string | null>(null);
 
   const handleImageUpload = async (monthIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       try {
         const compressed = await validateAndCompressImage(file);
-        setPendingImage(compressed);
-        setPendingPosition({ x: 50, y: 50 });
+        setCropperImage(compressed);
+        setCropperOpen(true);
       } catch (error) {
         toast({
           title: "Error processing image",
@@ -44,6 +47,20 @@ const Planner = () => {
         });
       }
     }
+    // Reset input
+    if (e.target) e.target.value = '';
+  };
+
+  const handleCropComplete = (croppedImage: string) => {
+    setPendingImage(croppedImage);
+    setPendingPosition({ x: 50, y: 50 });
+    setCropperOpen(false);
+    setCropperImage(null);
+  };
+
+  const handleCropCancel = () => {
+    setCropperOpen(false);
+    setCropperImage(null);
   };
 
   // Load cover images from IndexedDB on mount
@@ -360,6 +377,17 @@ const Planner = () => {
           </main>
         </SidebarInset>
       </div>
+
+      {/* Image Cropper */}
+      {cropperImage && (
+        <ImageCropper
+          open={cropperOpen}
+          imageSrc={cropperImage}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+          aspectRatio={4 / 3}
+        />
+      )}
     </SidebarProvider>
   );
 };

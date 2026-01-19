@@ -10,11 +10,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Dumbbell, Plus, Trash2, Check, TrendingDown, Camera, Link as LinkIcon, Play, Edit } from 'lucide-react';
+import { Dumbbell, Plus, Trash2, Check, TrendingDown, Camera, Link as LinkIcon, Play, Edit, Upload } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { CurvedArches } from '../components/PageHeaderImages';
 import { validateAndCompressImage } from '../lib/imageCompression';
+import { ImageCropper } from '../components/ImageCropper';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -48,6 +49,11 @@ const FitnessTracker = () => {
     videoUrl: '',
     image: '',
   });
+  
+  // ImageCropper state
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
+  const [cropperTarget, setCropperTarget] = useState<'workout' | 'editWorkout' | 'progress'>('workout');
 
   const [newWorkout, setNewWorkout] = useState({
     name: '',
@@ -110,7 +116,9 @@ const FitnessTracker = () => {
     if (file) {
       try {
         const compressedImage = await validateAndCompressImage(file);
-        setNewWorkout({ ...newWorkout, image: compressedImage });
+        setPendingImage(compressedImage);
+        setCropperTarget('workout');
+        setCropperOpen(true);
       } catch (error) {
         console.error('Error compressing image:', error);
         toast({
@@ -120,6 +128,8 @@ const FitnessTracker = () => {
         });
       }
     }
+    // Reset input
+    if (e.target) e.target.value = '';
   };
 
   const handleProgressPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,7 +137,9 @@ const FitnessTracker = () => {
     if (file) {
       try {
         const compressedImage = await validateAndCompressImage(file);
-        setNewPhoto({ ...newPhoto, url: compressedImage });
+        setPendingImage(compressedImage);
+        setCropperTarget('progress');
+        setCropperOpen(true);
       } catch (error) {
         console.error('Error compressing image:', error);
         toast({
@@ -137,6 +149,25 @@ const FitnessTracker = () => {
         });
       }
     }
+    // Reset input
+    if (e.target) e.target.value = '';
+  };
+
+  const handleCropComplete = (croppedImage: string) => {
+    if (cropperTarget === 'workout') {
+      setNewWorkout({ ...newWorkout, image: croppedImage });
+    } else if (cropperTarget === 'editWorkout') {
+      setEditWorkoutData({ ...editWorkoutData, image: croppedImage });
+    } else if (cropperTarget === 'progress') {
+      setNewPhoto({ ...newPhoto, url: croppedImage });
+    }
+    setCropperOpen(false);
+    setPendingImage(null);
+  };
+
+  const handleCropCancel = () => {
+    setCropperOpen(false);
+    setPendingImage(null);
   };
 
   const toggleDay = (day: string) => {
@@ -227,7 +258,9 @@ const FitnessTracker = () => {
     if (file) {
       try {
         const compressedImage = await validateAndCompressImage(file);
-        setEditWorkoutData({ ...editWorkoutData, image: compressedImage });
+        setPendingImage(compressedImage);
+        setCropperTarget('editWorkout');
+        setCropperOpen(true);
       } catch (error) {
         console.error('Error compressing image:', error);
         toast({
@@ -237,6 +270,8 @@ const FitnessTracker = () => {
         });
       }
     }
+    // Reset input
+    if (e.target) e.target.value = '';
   };
 
   const handleSaveWorkout = () => {
@@ -380,12 +415,16 @@ const FitnessTracker = () => {
 
                   <div>
                     <Label className="text-coquette-brown-600">Or Upload Image</Label>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleWorkoutImageUpload}
-                      className="border-coquette-brown-200"
-                    />
+                    <label className="flex items-center justify-center gap-2 w-full px-4 py-2 border-2 border-dashed border-coquette-brown-200 rounded-lg cursor-pointer hover:bg-coquette-pink-50 transition-colors">
+                      <Upload className="h-4 w-4 text-coquette-brown-500" />
+                      <span className="text-sm text-coquette-brown-600">Choose Image</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleWorkoutImageUpload}
+                        className="hidden"
+                      />
+                    </label>
                   </div>
 
                   <div>
@@ -490,12 +529,16 @@ const FitnessTracker = () => {
 
                   <div>
                     <Label className="text-coquette-brown-600">Upload New Image</Label>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleEditWorkoutImageUpload}
-                      className="border-coquette-brown-200"
-                    />
+                    <label className="flex items-center justify-center gap-2 w-full px-4 py-2 border-2 border-dashed border-coquette-brown-200 rounded-lg cursor-pointer hover:bg-coquette-pink-50 transition-colors">
+                      <Upload className="h-4 w-4 text-coquette-brown-500" />
+                      <span className="text-sm text-coquette-brown-600">Choose Image</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleEditWorkoutImageUpload}
+                        className="hidden"
+                      />
+                    </label>
                   </div>
 
                   <div>
@@ -749,14 +792,27 @@ const FitnessTracker = () => {
                         <DialogTitle className="text-coquette-brown-600">Add Progress Photo</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4">
+                        {newPhoto.url && (
+                          <div className="relative">
+                            <img
+                              src={newPhoto.url}
+                              alt="Preview"
+                              className="w-full h-48 object-cover rounded-lg border-2 border-coquette-brown-200"
+                            />
+                          </div>
+                        )}
                         <div>
                           <Label className="text-coquette-brown-600">Upload Photo</Label>
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleProgressPhotoUpload}
-                            className="border-coquette-brown-200"
-                          />
+                          <label className="flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed border-coquette-brown-200 rounded-lg cursor-pointer hover:bg-coquette-pink-50 transition-colors">
+                            <Upload className="h-5 w-5 text-coquette-brown-500" />
+                            <span className="text-sm text-coquette-brown-600">{newPhoto.url ? 'Change Photo' : 'Choose Photo'}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleProgressPhotoUpload}
+                              className="hidden"
+                            />
+                          </label>
                         </div>
                         <div>
                           <Label className="text-coquette-brown-600">Or Image URL</Label>
@@ -820,6 +876,17 @@ const FitnessTracker = () => {
           </main>
         </SidebarInset>
       </div>
+
+      {/* ImageCropper Dialog */}
+      {pendingImage && (
+        <ImageCropper
+          open={cropperOpen}
+          imageSrc={pendingImage}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+          aspectRatio={cropperTarget === 'progress' ? 3 / 4 : 16 / 9}
+        />
+      )}
     </SidebarProvider>
   );
 };
