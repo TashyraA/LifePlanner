@@ -11,12 +11,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BookOpen, Plus, Trash2, Edit, Link as LinkIcon, Play, Calendar, ShoppingCart, ArrowLeft, Crop, Search, Upload } from 'lucide-react';
+import { BookOpen, Plus, Trash2, Edit, Link as LinkIcon, Play, Calendar, ShoppingCart, ArrowLeft, Crop, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { validateAndCompressImage } from '../lib/imageCompression';
 import { Link } from 'react-router-dom';
 import { ImageCropper } from '../components/ImageCropper';
-import { NutritionSearch, FoodIngredient, NutritionData } from '../components/NutritionSearch';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -37,67 +36,35 @@ const RecipeBank = () => {
   const [cropperImage, setCropperImage] = useState<string | null>(null);
   const [cropperTarget, setCropperTarget] = useState<'newRecipe' | 'editRecipe' | null>(null);
 
-  // Nutrition search state
-  const [nutritionSearchOpen, setNutritionSearchOpen] = useState(false);
-  const [nutritionSearchTarget, setNutritionSearchTarget] = useState<'newRecipe' | 'editRecipe'>('newRecipe');
-
-  // Food ingredients with nutrition
-  const [newFoodIngredients, setNewFoodIngredients] = useState<FoodIngredient[]>([]);
-  const [editFoodIngredients, setEditFoodIngredients] = useState<FoodIngredient[]>([]);
-
   const [newRecipe, setNewRecipe] = useState({
     name: '',
     image: '',
     videoUrl: '',
+    ingredients: '',
     recipe: '',
     category: '',
     prepTime: '',
     servings: '',
+    calories: '',
+    protein: '',
+    carbs: '',
+    fats: '',
   });
 
   const [editRecipeData, setEditRecipeData] = useState({
     name: '',
     image: '',
     videoUrl: '',
+    ingredients: '',
     recipe: '',
     category: '',
     prepTime: '',
     servings: '',
+    calories: '',
+    protein: '',
+    carbs: '',
+    fats: '',
   });
-
-  // Calculate total nutrition from ingredients
-  const calculateTotalNutrition = (ingredients: FoodIngredient[]): NutritionData => {
-    return ingredients.reduce(
-      (total, ing) => ({
-        calories: total.calories + ing.nutrition.calories,
-        protein: Math.round((total.protein + ing.nutrition.protein) * 10) / 10,
-        carbs: Math.round((total.carbs + ing.nutrition.carbs) * 10) / 10,
-        fats: Math.round((total.fats + ing.nutrition.fats) * 10) / 10,
-        fiber: Math.round((total.fiber + ing.nutrition.fiber) * 10) / 10,
-      }),
-      { calories: 0, protein: 0, carbs: 0, fats: 0, fiber: 0 }
-    );
-  };
-
-  const handleAddFoodIngredient = (ingredient: FoodIngredient) => {
-    if (nutritionSearchTarget === 'newRecipe') {
-      setNewFoodIngredients([...newFoodIngredients, ingredient]);
-    } else {
-      setEditFoodIngredients([...editFoodIngredients, ingredient]);
-    }
-    toast({
-      title: 'Ingredient Added!',
-      description: `Added "${ingredient.name}"`,
-    });
-  };
-
-  const removeFoodIngredient = (id: string, target: 'newRecipe' | 'editRecipe') => {
-    if (target === 'newRecipe') {
-      setNewFoodIngredients(newFoodIngredients.filter(i => i.id !== id));
-    } else {
-      setEditFoodIngredients(editFoodIngredients.filter(i => i.id !== id));
-    }
-  };
 
   const extractYouTubeId = (url: string): string | null => {
     const patterns = [
@@ -174,22 +141,26 @@ const RecipeBank = () => {
 
   const handleAddRecipe = () => {
     if (newRecipe.name) {
-      const totalNutrition = calculateTotalNutrition(newFoodIngredients);
-      const ingredients = newFoodIngredients.map(i => ({ 
-        name: i.name, 
-        amount: `${i.servings} serving${i.servings !== 1 ? 's' : ''} (${i.servingSize})` 
-      }));
+      // Parse ingredients from textarea (one per line)
+      const ingredientLines = newRecipe.ingredients.split('\n').filter(line => line.trim());
+      const ingredients = ingredientLines.map(line => {
+        // Try to parse "amount ingredient" format, or just use the whole line as name
+        const parts = line.trim().match(/^([\d./\s\w]+?)\s+(.+)$/);
+        if (parts) {
+          return { amount: parts[1].trim(), name: parts[2].trim() };
+        }
+        return { name: line.trim(), amount: '' };
+      });
 
       addRecipe({
         name: newRecipe.name,
         image: newRecipe.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
         videoUrl: newRecipe.videoUrl,
         ingredients: ingredients,
-        calories: totalNutrition.calories,
-        protein: totalNutrition.protein,
-        carbs: totalNutrition.carbs,
-        fats: totalNutrition.fats,
-        fiber: totalNutrition.fiber,
+        calories: parseInt(newRecipe.calories) || 0,
+        protein: parseFloat(newRecipe.protein) || 0,
+        carbs: parseFloat(newRecipe.carbs) || 0,
+        fats: parseFloat(newRecipe.fats) || 0,
         recipe: newRecipe.recipe,
         category: newRecipe.category,
         prepTime: newRecipe.prepTime,
@@ -200,12 +171,16 @@ const RecipeBank = () => {
         name: '',
         image: '',
         videoUrl: '',
+        ingredients: '',
         recipe: '',
         category: '',
         prepTime: '',
         servings: '',
+        calories: '',
+        protein: '',
+        carbs: '',
+        fats: '',
       });
-      setNewFoodIngredients([]);
 
       setIsAddDialogOpen(false);
       toast({
@@ -218,54 +193,50 @@ const RecipeBank = () => {
   const handleEditRecipe = (recipeId: string) => {
     const recipe = recipes.find(r => r.id === recipeId);
     if (recipe) {
+      // Convert ingredients back to text format
+      const ingredientsText = recipe.ingredients
+        .map(i => i.amount ? `${i.amount} ${i.name}` : i.name)
+        .join('\n');
+      
       setEditRecipeData({
         name: recipe.name,
         image: recipe.image || '',
         videoUrl: recipe.videoUrl || '',
+        ingredients: ingredientsText,
         recipe: recipe.recipe || '',
         category: recipe.category || '',
         prepTime: recipe.prepTime || '',
         servings: recipe.servings?.toString() || '',
+        calories: recipe.calories?.toString() || '',
+        protein: recipe.protein?.toString() || '',
+        carbs: recipe.carbs?.toString() || '',
+        fats: recipe.fats?.toString() || '',
       });
-      // Convert ingredients to FoodIngredient format for display
-      // Note: For existing recipes, we'll show them as simple ingredients
-      // Users can add new food items with nutrition
-      const foodIngredients: FoodIngredient[] = recipe.ingredients.map((i, idx) => ({
-        id: `existing-${idx}`,
-        name: i.name,
-        servings: 1,
-        servingSize: i.amount,
-        nutrition: {
-          calories: Math.round((recipe.calories || 0) / recipe.ingredients.length),
-          protein: Math.round(((recipe.protein || 0) / recipe.ingredients.length) * 10) / 10,
-          carbs: Math.round(((recipe.carbs || 0) / recipe.ingredients.length) * 10) / 10,
-          fats: Math.round(((recipe.fats || 0) / recipe.ingredients.length) * 10) / 10,
-          fiber: Math.round((((recipe as any).fiber || 0) / recipe.ingredients.length) * 10) / 10,
-        },
-      }));
-      setEditFoodIngredients(foodIngredients);
       setEditingRecipe(recipeId);
     }
   };
 
   const handleSaveRecipe = () => {
     if (editingRecipe && editRecipeData.name) {
-      const totalNutrition = calculateTotalNutrition(editFoodIngredients);
-      const ingredients = editFoodIngredients.map(i => ({ 
-        name: i.name, 
-        amount: i.servingSize || `${i.servings} serving${i.servings !== 1 ? 's' : ''}` 
-      }));
+      // Parse ingredients from textarea
+      const ingredientLines = editRecipeData.ingredients.split('\n').filter(line => line.trim());
+      const ingredients = ingredientLines.map(line => {
+        const parts = line.trim().match(/^([\d./\s\w]+?)\s+(.+)$/);
+        if (parts) {
+          return { amount: parts[1].trim(), name: parts[2].trim() };
+        }
+        return { name: line.trim(), amount: '' };
+      });
 
       updateRecipe(editingRecipe, {
         name: editRecipeData.name,
         image: editRecipeData.image,
         videoUrl: editRecipeData.videoUrl,
         ingredients: ingredients,
-        calories: totalNutrition.calories,
-        protein: totalNutrition.protein,
-        carbs: totalNutrition.carbs,
-        fats: totalNutrition.fats,
-        fiber: totalNutrition.fiber,
+        calories: parseInt(editRecipeData.calories) || 0,
+        protein: parseFloat(editRecipeData.protein) || 0,
+        carbs: parseFloat(editRecipeData.carbs) || 0,
+        fats: parseFloat(editRecipeData.fats) || 0,
         recipe: editRecipeData.recipe,
         category: editRecipeData.category,
         prepTime: editRecipeData.prepTime,
@@ -273,7 +244,6 @@ const RecipeBank = () => {
       });
 
       setEditingRecipe(null);
-      setEditFoodIngredients([]);
       toast({
         title: "Recipe updated! ✓",
         description: "Your recipe has been updated.",
@@ -440,107 +410,61 @@ const RecipeBank = () => {
                     </label>
                   </div>
 
-                  {/* Ingredients Section - Search & Add */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-coquette-brown-600 font-medium">Ingredients</Label>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setNutritionSearchTarget('newRecipe');
-                          setNutritionSearchOpen(true);
-                        }}
-                        className="border-coquette-pink-300 text-coquette-pink-500 hover:bg-coquette-pink-50"
-                      >
-                        <Search className="h-4 w-4 mr-1" />
-                        Search & Add Food
-                      </Button>
-                    </div>
-                    
-                    {/* Added Ingredients List */}
-                    {newFoodIngredients.length > 0 ? (
-                      <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-                        {newFoodIngredients.map((ingredient) => (
-                          <div key={ingredient.id} className="bg-coquette-pink-50 p-2 rounded-lg">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <p className="font-medium text-coquette-brown-600 text-sm capitalize">
-                                  {ingredient.name.toLowerCase()}
-                                </p>
-                                <p className="text-xs text-coquette-brown-400">
-                                  {ingredient.servings} × {ingredient.servingSize}
-                                </p>
-                              </div>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeFoodIngredient(ingredient.id, 'newRecipe')}
-                                className="text-red-400 hover:text-red-600 hover:bg-red-50 h-6 w-6 p-0"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                            <div className="flex flex-wrap gap-1 mt-1 text-xs">
-                              <span className="bg-white px-1.5 py-0.5 rounded">{ingredient.nutrition.calories} cal</span>
-                              <span className="bg-blue-50 px-1.5 py-0.5 rounded">P: {ingredient.nutrition.protein}g</span>
-                              <span className="bg-yellow-50 px-1.5 py-0.5 rounded">C: {ingredient.nutrition.carbs}g</span>
-                              <span className="bg-orange-50 px-1.5 py-0.5 rounded">F: {ingredient.nutrition.fats}g</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-4 text-coquette-brown-400 text-sm border-2 border-dashed border-coquette-brown-200 rounded-lg">
-                        <Search className="h-6 w-6 mx-auto mb-1 opacity-50" />
-                        <p>No ingredients added yet</p>
-                        <p className="text-xs">Search for foods to add them</p>
-                      </div>
-                    )}
+                  {/* Ingredients - Simple textarea */}
+                  <div>
+                    <Label className="text-coquette-brown-600">Ingredients (one per line)</Label>
+                    <Textarea
+                      value={newRecipe.ingredients}
+                      onChange={(e) => setNewRecipe({ ...newRecipe, ingredients: e.target.value })}
+                      placeholder="2 cups flour&#10;1 tsp salt&#10;3 eggs&#10;1 cup milk"
+                      className="border-coquette-brown-200"
+                      rows={5}
+                    />
+                    <p className="text-xs text-coquette-brown-400 mt-1">Tip: Include amounts like "2 cups flour"</p>
                   </div>
 
-                  {/* Total Nutrition Display */}
-                  {newFoodIngredients.length > 0 && (
-                    <div className="bg-gradient-to-r from-coquette-pink-100 to-coquette-brown-100 p-4 rounded-lg">
-                      <Label className="text-coquette-brown-600 font-medium mb-3 block">
-                        📊 Total Nutrition ({newFoodIngredients.length} ingredient{newFoodIngredients.length !== 1 ? 's' : ''})
-                      </Label>
-                      <div className="grid grid-cols-5 gap-2 text-center">
-                        <div className="bg-white rounded-lg p-2">
-                          <div className="font-bold text-lg text-coquette-brown-600">
-                            {calculateTotalNutrition(newFoodIngredients).calories}
-                          </div>
-                          <div className="text-xs text-coquette-brown-500">Calories</div>
-                        </div>
-                        <div className="bg-white rounded-lg p-2">
-                          <div className="font-bold text-lg text-blue-600">
-                            {calculateTotalNutrition(newFoodIngredients).protein}g
-                          </div>
-                          <div className="text-xs text-coquette-brown-500">Protein</div>
-                        </div>
-                        <div className="bg-white rounded-lg p-2">
-                          <div className="font-bold text-lg text-yellow-600">
-                            {calculateTotalNutrition(newFoodIngredients).carbs}g
-                          </div>
-                          <div className="text-xs text-coquette-brown-500">Carbs</div>
-                        </div>
-                        <div className="bg-white rounded-lg p-2">
-                          <div className="font-bold text-lg text-orange-600">
-                            {calculateTotalNutrition(newFoodIngredients).fats}g
-                          </div>
-                          <div className="text-xs text-coquette-brown-500">Fats</div>
-                        </div>
-                        <div className="bg-white rounded-lg p-2">
-                          <div className="font-bold text-lg text-green-600">
-                            {calculateTotalNutrition(newFoodIngredients).fiber}g
-                          </div>
-                          <div className="text-xs text-coquette-brown-500">Fiber</div>
-                        </div>
+                  {/* Nutrition Info - Optional */}
+                  <div>
+                    <Label className="text-coquette-brown-600">Nutrition (optional, per serving)</Label>
+                    <div className="grid grid-cols-4 gap-2 mt-2">
+                      <div>
+                        <Input
+                          type="number"
+                          placeholder="Cals"
+                          value={newRecipe.calories}
+                          onChange={(e) => setNewRecipe({ ...newRecipe, calories: e.target.value })}
+                          className="border-coquette-brown-200 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Input
+                          type="number"
+                          placeholder="Protein"
+                          value={newRecipe.protein}
+                          onChange={(e) => setNewRecipe({ ...newRecipe, protein: e.target.value })}
+                          className="border-coquette-brown-200 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Input
+                          type="number"
+                          placeholder="Carbs"
+                          value={newRecipe.carbs}
+                          onChange={(e) => setNewRecipe({ ...newRecipe, carbs: e.target.value })}
+                          className="border-coquette-brown-200 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Input
+                          type="number"
+                          placeholder="Fats"
+                          value={newRecipe.fats}
+                          onChange={(e) => setNewRecipe({ ...newRecipe, fats: e.target.value })}
+                          className="border-coquette-brown-200 text-sm"
+                        />
                       </div>
                     </div>
-                  )}
+                  </div>
 
                   <div>
                     <Label className="text-coquette-brown-600">Servings</Label>
@@ -907,105 +831,60 @@ const RecipeBank = () => {
               </label>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-coquette-brown-600 font-medium">Ingredients</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setNutritionSearchTarget('editRecipe');
-                    setNutritionSearchOpen(true);
-                  }}
-                  className="border-coquette-pink-300 text-coquette-pink-500 hover:bg-coquette-pink-50"
-                >
-                  <Search className="h-4 w-4 mr-1" />
-                  Search & Add Food
-                </Button>
-              </div>
-              
-              {/* Added Ingredients List */}
-              {editFoodIngredients.length > 0 ? (
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-                  {editFoodIngredients.map((ingredient) => (
-                    <div key={ingredient.id} className="bg-coquette-pink-50 p-2 rounded-lg">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <p className="font-medium text-coquette-brown-600 text-sm capitalize">
-                            {ingredient.name.toLowerCase()}
-                          </p>
-                          <p className="text-xs text-coquette-brown-400">
-                            {ingredient.servings} × {ingredient.servingSize}
-                          </p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFoodIngredient(ingredient.id, 'editRecipe')}
-                          className="text-red-400 hover:text-red-600 hover:bg-red-50 h-6 w-6 p-0"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                      <div className="flex flex-wrap gap-1 mt-1 text-xs">
-                        <span className="bg-white px-1.5 py-0.5 rounded">{ingredient.nutrition.calories} cal</span>
-                        <span className="bg-blue-50 px-1.5 py-0.5 rounded">P: {ingredient.nutrition.protein}g</span>
-                        <span className="bg-yellow-50 px-1.5 py-0.5 rounded">C: {ingredient.nutrition.carbs}g</span>
-                        <span className="bg-orange-50 px-1.5 py-0.5 rounded">F: {ingredient.nutrition.fats}g</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-4 text-coquette-brown-400 text-sm border-2 border-dashed border-coquette-brown-200 rounded-lg">
-                  <Search className="h-6 w-6 mx-auto mb-1 opacity-50" />
-                  <p>No ingredients added yet</p>
-                </div>
-              )}
+            {/* Ingredients - Simple textarea */}
+            <div>
+              <Label className="text-coquette-brown-600">Ingredients (one per line)</Label>
+              <Textarea
+                value={editRecipeData.ingredients}
+                onChange={(e) => setEditRecipeData({ ...editRecipeData, ingredients: e.target.value })}
+                placeholder="2 cups flour&#10;1 tsp salt&#10;3 eggs"
+                className="border-coquette-brown-200"
+                rows={5}
+              />
             </div>
 
-            {/* Total Nutrition Display */}
-            {editFoodIngredients.length > 0 && (
-              <div className="bg-gradient-to-r from-coquette-pink-100 to-coquette-brown-100 p-4 rounded-lg">
-                <Label className="text-coquette-brown-600 font-medium mb-3 block">
-                  📊 Total Nutrition ({editFoodIngredients.length} ingredient{editFoodIngredients.length !== 1 ? 's' : ''})
-                </Label>
-                <div className="grid grid-cols-5 gap-2 text-center">
-                  <div className="bg-white rounded-lg p-2">
-                    <div className="font-bold text-lg text-coquette-brown-600">
-                      {calculateTotalNutrition(editFoodIngredients).calories}
-                    </div>
-                    <div className="text-xs text-coquette-brown-500">Calories</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-2">
-                    <div className="font-bold text-lg text-blue-600">
-                      {calculateTotalNutrition(editFoodIngredients).protein}g
-                    </div>
-                    <div className="text-xs text-coquette-brown-500">Protein</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-2">
-                    <div className="font-bold text-lg text-yellow-600">
-                      {calculateTotalNutrition(editFoodIngredients).carbs}g
-                    </div>
-                    <div className="text-xs text-coquette-brown-500">Carbs</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-2">
-                    <div className="font-bold text-lg text-orange-600">
-                      {calculateTotalNutrition(editFoodIngredients).fats}g
-                    </div>
-                    <div className="text-xs text-coquette-brown-500">Fats</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-2">
-                    <div className="font-bold text-lg text-green-600">
-                      {calculateTotalNutrition(editFoodIngredients).fiber}g
-                    </div>
-                    <div className="text-xs text-coquette-brown-500">Fiber</div>
-                  </div>
+            {/* Nutrition Info */}
+            <div>
+              <Label className="text-coquette-brown-600">Nutrition (per serving)</Label>
+              <div className="grid grid-cols-4 gap-2 mt-2">
+                <div>
+                  <Input
+                    type="number"
+                    placeholder="Cals"
+                    value={editRecipeData.calories}
+                    onChange={(e) => setEditRecipeData({ ...editRecipeData, calories: e.target.value })}
+                    className="border-coquette-brown-200 text-sm"
+                  />
+                </div>
+                <div>
+                  <Input
+                    type="number"
+                    placeholder="Protein"
+                    value={editRecipeData.protein}
+                    onChange={(e) => setEditRecipeData({ ...editRecipeData, protein: e.target.value })}
+                    className="border-coquette-brown-200 text-sm"
+                  />
+                </div>
+                <div>
+                  <Input
+                    type="number"
+                    placeholder="Carbs"
+                    value={editRecipeData.carbs}
+                    onChange={(e) => setEditRecipeData({ ...editRecipeData, carbs: e.target.value })}
+                    className="border-coquette-brown-200 text-sm"
+                  />
+                </div>
+                <div>
+                  <Input
+                    type="number"
+                    placeholder="Fats"
+                    value={editRecipeData.fats}
+                    onChange={(e) => setEditRecipeData({ ...editRecipeData, fats: e.target.value })}
+                    className="border-coquette-brown-200 text-sm"
+                  />
                 </div>
               </div>
-            )}
+            </div>
 
             <div>
               <Label className="text-coquette-brown-600">Servings</Label>
@@ -1046,13 +925,6 @@ const RecipeBank = () => {
           }}
         />
       )}
-
-      {/* Nutrition Search */}
-      <NutritionSearch
-        isOpen={nutritionSearchOpen}
-        onClose={() => setNutritionSearchOpen(false)}
-        onAddIngredient={handleAddFoodIngredient}
-      />
     </SidebarProvider>
   );
 };
