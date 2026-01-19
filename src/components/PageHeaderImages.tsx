@@ -60,7 +60,7 @@ export const CurvedArches: React.FC<CurvedArchesProps> = ({ images, onUpload, on
                 <div 
                   className="relative overflow-hidden bg-gradient-to-br from-coquette-pink-100 to-coquette-brown-100 border-2 border-coquette-brown-200 cursor-pointer transition-all hover:shadow-xl"
                   style={{
-                    height: 'clamp(120px, 25vw, 240px)',
+                    height: 'clamp(140px, 30vw, 280px)',
                     borderRadius: '50% 50% 0 0',
                   }}
                   onClick={() => !image && fileInputRefs[index].current?.click()}
@@ -180,7 +180,7 @@ export const BorderImage: React.FC<BorderImageProps> = ({ image, onUpload, onRem
       <div className="relative w-full">
         {image ? (
           <div className="relative group">
-            <div className="w-full h-56 sm:h-64 md:h-72 overflow-hidden border-b-4 border-coquette-brown-300">
+            <div className="w-full overflow-hidden border-b-4 border-coquette-brown-300" style={{ height: 'clamp(220px, 35vw, 320px)' }}>
               <img
                 src={image}
                 alt="Header decoration"
@@ -210,7 +210,8 @@ export const BorderImage: React.FC<BorderImageProps> = ({ image, onUpload, onRem
         ) : (
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="w-full h-56 sm:h-64 md:h-72 border-b-4 border-dashed border-coquette-brown-300 bg-gradient-to-r from-coquette-pink-50 to-coquette-brown-50 flex flex-col items-center justify-center cursor-pointer hover:bg-gradient-to-r hover:from-coquette-pink-100 hover:to-coquette-brown-100 transition-all"
+            className="w-full border-b-4 border-dashed border-coquette-brown-300 bg-gradient-to-r from-coquette-pink-50 to-coquette-brown-50 flex flex-col items-center justify-center cursor-pointer hover:bg-gradient-to-r hover:from-coquette-pink-100 hover:to-coquette-brown-100 transition-all"
+            style={{ height: 'clamp(220px, 35vw, 320px)' }}
           >
             <Upload className="h-8 w-8 text-coquette-brown-400 mb-2" />
             <span className="text-sm font-medium text-coquette-brown-500">Add header image</span>
