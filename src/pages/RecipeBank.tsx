@@ -17,7 +17,7 @@ import { validateAndCompressImage } from '../lib/imageCompression';
 import { Link } from 'react-router-dom';
 import { ImageCropper } from '../components/ImageCropper';
 import { parseRecipeImport } from '../lib/recipeImport';
-import { extractPdfText } from '../lib/pdfText';
+import { extractPdfText, extractPdfTextWithOcr } from '../lib/pdfText';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -35,6 +35,7 @@ const RecipeBank = () => {
   const [loadingVideo, setLoadingVideo] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [importText, setImportText] = useState('');
+  const [isReadingPdf, setIsReadingPdf] = useState(false);
 
   // Image cropper state
   const [cropperImage, setCropperImage] = useState<string | null>(null);
@@ -147,14 +148,16 @@ const RecipeBank = () => {
     const file = event.target.files?.[0];
     if (!file) return;
     try {
-      const text = file.type === 'application/pdf'
-        ? await extractPdfText(file)
-        : await file.text();
+      setIsReadingPdf(file.type === 'application/pdf');
+      let text = file.type === 'application/pdf' ? await extractPdfText(file) : await file.text();
+      if (file.type === 'application/pdf' && !text.trim()) {
+        text = await extractPdfTextWithOcr(file);
+      }
       setImportText(text);
       if (!text.trim()) {
         toast({
-          title: 'PDF has no selectable text',
-          description: 'This PDF may be a scanned image. Copy the recipe text from ReciMe and paste it here instead.',
+          title: 'Could not read PDF',
+          description: 'This PDF may be protected or too low-resolution for OCR. Try a clearer export from ReciMe.',
           variant: 'destructive',
         });
       }
@@ -165,6 +168,7 @@ const RecipeBank = () => {
         variant: 'destructive',
       });
     } finally {
+      setIsReadingPdf(false);
       event.target.value = '';
     }
   };
@@ -370,7 +374,7 @@ const RecipeBank = () => {
                 <div className="space-y-4">
                   <label className="flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed border-coquette-brown-200 rounded-lg cursor-pointer hover:bg-coquette-pink-50 transition-colors">
                     <Upload className="h-5 w-5 text-coquette-brown-500" />
-                    <span className="text-sm text-coquette-brown-600">Choose export file</span>
+                    <span className="text-sm text-coquette-brown-600">{isReadingPdf ? 'Reading PDF...' : 'Choose export file'}</span>
                     <input type="file" accept=".pdf,.json,.txt,application/pdf,application/json,text/plain" onChange={handleImportFile} className="hidden" />
                   </label>
                   <Textarea
@@ -379,7 +383,7 @@ const RecipeBank = () => {
                     placeholder={'Paste the recipe here...\n\nIngredients\n2 cups flour\n1 tsp salt\n\nInstructions\nMix and bake.'}
                     className="min-h-64 border-coquette-brown-200"
                   />
-                  <Button onClick={handleImportRecipes} disabled={!importText.trim()} className="w-full bg-coquette-pink-300 hover:bg-coquette-pink-400 text-coquette-brown-600">
+                  <Button onClick={handleImportRecipes} disabled={!importText.trim() || isReadingPdf} className="w-full bg-coquette-pink-300 hover:bg-coquette-pink-400 text-coquette-brown-600">
                     Import Recipe
                   </Button>
                 </div>
