@@ -129,7 +129,7 @@ export const MealProvider: React.FC<{ children: React.ReactNode }> = ({ children
    }, [meals, recipes, headerImageKeys]);
 
   const addMeal = (meal: Omit<Meal, 'id'>) => {
-    setMeals([...meals, { ...meal, id: uuidv4() }]);
+    setMeals(currentMeals => [...currentMeals, { ...meal, id: uuidv4() }]);
   };
 
   const updateMeal = (id: string, updates: Partial<Omit<Meal, 'id'>>) => {
@@ -141,7 +141,7 @@ export const MealProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addRecipe = (recipe: Omit<Recipe, 'id'>) => {
-    setRecipes([...recipes, { ...recipe, id: uuidv4() }]);
+    setRecipes(currentRecipes => [...currentRecipes, { ...recipe, id: uuidv4() }]);
   };
 
   const updateRecipe = (id: string, updates: Partial<Omit<Recipe, 'id'>>) => {

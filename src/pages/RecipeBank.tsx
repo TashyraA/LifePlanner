@@ -9,13 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BookOpen, Plus, Trash2, Edit, Link as LinkIcon, Play, Calendar, ShoppingCart, ArrowLeft, Crop, Upload } from 'lucide-react';
+import { BookOpen, Plus, Trash2, Edit, Link as LinkIcon, Play, Calendar, ShoppingCart, ArrowLeft, Crop, Upload, FileJson } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { validateAndCompressImage } from '../lib/imageCompression';
 import { Link } from 'react-router-dom';
 import { ImageCropper } from '../components/ImageCropper';
+import { parseRecipeImport } from '../lib/recipeImport';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -31,6 +32,8 @@ const RecipeBank = () => {
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedMealType, setSelectedMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('lunch');
   const [loadingVideo, setLoadingVideo] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [importText, setImportText] = useState('');
 
   // Image cropper state
   const [cropperImage, setCropperImage] = useState<string | null>(null);
@@ -137,6 +140,35 @@ const RecipeBank = () => {
     }
     setCropperImage(null);
     setCropperTarget(null);
+  };
+
+  const handleImportFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setImportText(String(reader.result || ''));
+    reader.readAsText(file);
+    event.target.value = '';
+  };
+
+  const handleImportRecipes = () => {
+    const importedRecipes = parseRecipeImport(importText);
+    if (!importedRecipes.length) {
+      toast({
+        title: 'Could not read recipe',
+        description: 'Paste the recipe text shared from ReciMe, or choose a JSON/text export.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    importedRecipes.forEach(recipe => addRecipe(recipe));
+    setImportText('');
+    setIsImportDialogOpen(false);
+    toast({
+      title: `${importedRecipes.length} recipe${importedRecipes.length === 1 ? '' : 's'} imported!`,
+      description: 'The recipe has been added to your recipe bank.',
+    });
   };
 
   const handleAddRecipe = () => {
@@ -303,6 +335,38 @@ const RecipeBank = () => {
               <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-coquette-pink-400 flex-shrink-0" />
               <h1 className="text-lg sm:text-2xl font-bold text-coquette-brown-600 truncate">Recipe Bank</h1>
             </div>
+            <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="border-coquette-brown-200 text-coquette-brown-600 text-xs sm:text-sm px-2 sm:px-4">
+                  <FileJson className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Import ReciMe</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="text-coquette-brown-600">Import from ReciMe</DialogTitle>
+                  <DialogDescription>
+                    Paste a recipe copied from ReciMe, or upload a JSON or text export.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <label className="flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed border-coquette-brown-200 rounded-lg cursor-pointer hover:bg-coquette-pink-50 transition-colors">
+                    <Upload className="h-5 w-5 text-coquette-brown-500" />
+                    <span className="text-sm text-coquette-brown-600">Choose export file</span>
+                    <input type="file" accept=".json,.txt,application/json,text/plain" onChange={handleImportFile} className="hidden" />
+                  </label>
+                  <Textarea
+                    value={importText}
+                    onChange={(event) => setImportText(event.target.value)}
+                    placeholder={'Paste the recipe here...\n\nIngredients\n2 cups flour\n1 tsp salt\n\nInstructions\nMix and bake.'}
+                    className="min-h-64 border-coquette-brown-200"
+                  />
+                  <Button onClick={handleImportRecipes} disabled={!importText.trim()} className="w-full bg-coquette-pink-300 hover:bg-coquette-pink-400 text-coquette-brown-600">
+                    Import Recipe
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-coquette-pink-300 hover:bg-coquette-pink-400 text-coquette-brown-600 text-xs sm:text-sm px-2 sm:px-4" size="sm">
