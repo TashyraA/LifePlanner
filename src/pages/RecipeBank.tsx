@@ -17,6 +17,7 @@ import { validateAndCompressImage } from '../lib/imageCompression';
 import { Link } from 'react-router-dom';
 import { ImageCropper } from '../components/ImageCropper';
 import { parseRecipeImport } from '../lib/recipeImport';
+import { extractPdfText } from '../lib/pdfText';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -142,13 +143,30 @@ const RecipeBank = () => {
     setCropperTarget(null);
   };
 
-  const handleImportFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setImportText(String(reader.result || ''));
-    reader.readAsText(file);
-    event.target.value = '';
+    try {
+      const text = file.type === 'application/pdf'
+        ? await extractPdfText(file)
+        : await file.text();
+      setImportText(text);
+      if (!text.trim()) {
+        toast({
+          title: 'PDF has no selectable text',
+          description: 'This PDF may be a scanned image. Copy the recipe text from ReciMe and paste it here instead.',
+          variant: 'destructive',
+        });
+      }
+    } catch {
+      toast({
+        title: 'Could not open file',
+        description: 'Try copying the recipe from ReciMe and pasting it into the importer.',
+        variant: 'destructive',
+      });
+    } finally {
+      event.target.value = '';
+    }
   };
 
   const handleImportRecipes = () => {
@@ -156,7 +174,7 @@ const RecipeBank = () => {
     if (!importedRecipes.length) {
       toast({
         title: 'Could not read recipe',
-        description: 'Paste the recipe text shared from ReciMe, or choose a JSON/text export.',
+        description: 'Paste the recipe text shared from ReciMe, or choose a PDF, JSON, or text export.',
         variant: 'destructive',
       });
       return;
@@ -346,14 +364,14 @@ const RecipeBank = () => {
                 <DialogHeader>
                   <DialogTitle className="text-coquette-brown-600">Import from ReciMe</DialogTitle>
                   <DialogDescription>
-                    Paste a recipe copied from ReciMe, or upload a JSON or text export.
+                    Paste a recipe copied from ReciMe, or upload a PDF, JSON, or text export.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <label className="flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed border-coquette-brown-200 rounded-lg cursor-pointer hover:bg-coquette-pink-50 transition-colors">
                     <Upload className="h-5 w-5 text-coquette-brown-500" />
                     <span className="text-sm text-coquette-brown-600">Choose export file</span>
-                    <input type="file" accept=".json,.txt,application/json,text/plain" onChange={handleImportFile} className="hidden" />
+                    <input type="file" accept=".pdf,.json,.txt,application/pdf,application/json,text/plain" onChange={handleImportFile} className="hidden" />
                   </label>
                   <Textarea
                     value={importText}
